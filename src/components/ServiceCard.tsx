@@ -9,7 +9,7 @@ interface ServiceCardProps {
 
 export const ServiceCard = ({ icon: Icon, title, description }: ServiceCardProps) => {
   return (
-    <Card className="p-6 bg-[var(--gradient-card)] border-border hover:shadow-[var(--shadow-hover)] transition-all duration-300 hover:scale-[1.02]">
+    <Card className="p-6 bg-card transition-all duration-300 hover:scale-[1.02]">
       <div className="flex flex-col items-center text-center space-y-4">
         <div className="p-4 rounded-full bg-primary/10">
           <Icon className="w-8 h-8 text-primary" />

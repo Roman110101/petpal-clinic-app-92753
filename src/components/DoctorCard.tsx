@@ -1,24 +1,43 @@
 import { Card } from "@/components/ui/card";
+import type { Doctor } from "@/data/doctors";
 
 interface DoctorCardProps {
-  name: string;
-  specialty: string;
-  experience: string;
+  doctor: Doctor;
 }
 
-export const DoctorCard = ({ name, specialty, experience }: DoctorCardProps) => {
+export const DoctorCard = ({ doctor }: DoctorCardProps) => {
   return (
-    <Card className="p-6 bg-[var(--gradient-card)] border-border hover:shadow-[var(--shadow-hover)] transition-all duration-300">
-      <div className="space-y-3">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary-glow mx-auto flex items-center justify-center">
-          <span className="text-2xl font-bold text-primary-foreground">
-            {name.split(' ').map(n => n[0]).join('')}
-          </span>
-        </div>
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-foreground">{name}</h3>
-          <p className="text-primary text-sm font-medium">{specialty}</p>
-          <p className="text-muted-foreground text-sm mt-2">{experience}</p>
+    <Card className="relative overflow-hidden bg-card hover:shadow-md transition-shadow duration-200">
+      <div className="relative h-80">
+        {/* Фото врача */}
+        <img
+          src={`/Img team/${doctor.imageNumber}.jpg`}
+          alt={`Фото ${doctor.name}`}
+          className="absolute inset-0 w-full h-full object-cover object-top"
+          loading="lazy"
+          decoding="async"
+        />
+        
+        {/* Градиент снизу для читаемости текста */}
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-white dark:from-card to-transparent" />
+        
+        {/* Информация о враче - фиксированная высота снизу */}
+        <div className="absolute inset-x-0 bottom-0 p-4">
+          <div className="space-y-1">
+            <h3 className="font-bold text-foreground text-sm leading-tight line-clamp-2">
+              {doctor.name}
+            </h3>
+            
+            {doctor.specialty && (
+              <p className="text-foreground text-xs leading-tight line-clamp-2">
+                {doctor.specialty}
+              </p>
+            )}
+            
+            <p className="text-foreground text-xs leading-tight line-clamp-2">
+              {doctor.position}
+            </p>
+          </div>
         </div>
       </div>
     </Card>

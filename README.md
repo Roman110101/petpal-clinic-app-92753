@@ -1,73 +1,177 @@
-# Welcome to your Lovable project
+# 🐾 Ветеринарная клиника "МОРЕ" - Мобильное приложение
 
-## Project info
+> **Профессиональная ветеринарная помощь с заботой и любовью к вашим питомцам**  
+> *Глубокие знания. Широкие возможности.*
 
-**URL**: https://lovable.dev/projects/d460d94a-03c2-4f74-b9a0-5e3aed579faf
+[![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://petpal-clinic-app-92753.vercel.app)
+[![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 
-## How can I edit this code?
+## 🌟 Особенности
 
-There are several ways of editing your application.
+### 📱 **Мобильное приложение**
+- **Адаптивный дизайн** для всех устройств
+- **iOS Safari оптимизация** с safe area support
+- **PWA готово** для установки как приложение
+- **Темная/светлая тема** с автоматическим переключением
 
-**Use Lovable**
+### 🏥 **Функциональность клиники**
+- **15 ветеринарных услуг** с детальными описаниями
+- **Запись на прием** через Telegram интеграцию
+- **4 филиала клиники** с навигацией
+- **Команда из 19 врачей** с фотографиями и специализациями
+- **AI помощник** для консультаций
+- **Личный кабинет** с управлением питомцами
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d460d94a-03c2-4f74-b9a0-5e3aed579faf) and start prompting.
+### 🎨 **Дизайн и UX**
+- **Фирменные цвета** клиники (#00CFDB)
+- **Shadcn/ui компоненты** для единообразия
+- **Плавные анимации** и переходы
+- **Оптимизированные изображения** (50x сжатие)
+- **Ленивая загрузка** для быстродействия
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🗺️ **Уникальные возможности**
+- **Выбор навигатора** для маршрутов (Яндекс.Карты, Google Maps, 2ГИС, Apple Maps)
+- **Персонализированные кнопки Telegram** для каждой услуги
+- **Полноэкранные модальные окна** с правильной навигацией
+- **Accordion с умным скроллом** без прыжков
+- **Чек-листы ухода** за собаками и кошками
 
-**Use your preferred IDE**
+## 🚀 Технологический стек
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React 18 + TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Routing**: React Router DOM
+- **Build Tool**: Vite
+- **Deployment**: Vercel
+- **Icons**: Lucide React
+- **Image Processing**: Sharp (оптимизация)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📦 Установка и запуск
 
-Follow these steps:
+```bash
+# Клонирование репозитория
+git clone https://github.com/[username]/petpal-clinic-app-92753.git
+cd petpal-clinic-app-92753
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Установка зависимостей
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Запуск в режиме разработки
 npm run dev
+
+# Сборка для продакшена
+npm run build
+
+# Предварительный просмотр сборки
+npm run preview
 ```
 
-**Edit a file directly in GitHub**
+## 🏗️ Структура проекта
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+src/
+├── components/          # Переиспользуемые компоненты
+│   ├── ui/             # shadcn/ui компоненты
+│   ├── BranchCard.tsx  # Карточка филиала
+│   ├── DoctorCard.tsx  # Карточка врача
+│   ├── Header.tsx      # Шапка приложения
+│   └── MobileMenu.tsx  # Мобильное меню
+├── pages/              # Страницы приложения
+│   ├── Home.tsx        # Главная страница
+│   ├── Services.tsx    # Страница услуг
+│   ├── Branches.tsx    # Филиалы
+│   ├── Profile.tsx     # Личный кабинет
+│   └── Chat.tsx        # AI помощник
+├── data/               # Данные приложения
+│   ├── doctors.ts      # Информация о врачах
+│   └── *Prices.ts      # Прайс-листы услуг
+├── hooks/              # Кастомные хуки
+├── lib/                # Утилиты и конфиг
+└── assets/             # Изображения и ресурсы
+```
 
-**Use GitHub Codespaces**
+## 🎯 Ключевые страницы
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Страница | Описание | Особенности |
+|----------|----------|-------------|
+| **Home** | Главная страница | Hero секция, услуги, филиалы, команда |
+| **Services** | 15 ветеринарных услуг | Полноэкранные модалы, Telegram интеграция |
+| **Branches** | 4 филиала клиники | Выбор навигатора, контактная информация |
+| **Profile** | Личный кабинет | Управление питомцами, история, прививки |
+| **Chat** | AI помощник | Чат-бот для консультаций |
 
-## What technologies are used for this project?
+## 🔧 Настройка
 
-This project is built with:
+### Telegram интеграция
+Обновите номер телефона в файлах для Telegram ссылок:
+```typescript
+// Замените на ваш номер
+const phoneNumber = "+79250920272";
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Данные клиники
+Обновите информацию в файлах:
+- `src/data/doctors.ts` - врачи
+- `src/data/*Prices.ts` - прайс-листы
+- `src/pages/Branches.tsx` - филиалы
 
-## How can I deploy this project?
+## 📱 Мобильная оптимизация
 
-Simply open [Lovable](https://lovable.dev/projects/d460d94a-03c2-4f74-b9a0-5e3aed579faf) and click on Share -> Publish.
+- **Safe Area**: поддержка iPhone notch
+- **Viewport Units**: 100dvh для полного экрана
+- **Touch Optimization**: оптимизация для сенсорных экранов
+- **iOS Zoom Prevention**: предотвращение зума при фокусе на input
+- **Gesture Navigation**: поддержка свайпов
 
-## Can I connect a custom domain to my Lovable project?
+## 🎨 Цветовая схема
 
-Yes, you can!
+```css
+/* Основные цвета клиники */
+--primary: 180 100% 43%;        /* #00CFDB - бирюзовый */
+--background: 180 20% 96%;      /* #F2F6F6 - светлый фон */
+--card: 0 0% 98%;              /* #FAFAFA - карточки */
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📊 Производительность
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- **Сжатие изображений**: до 50x меньше размер
+- **Ленивая загрузка**: изображения подгружаются по требованию
+- **Код-сплиттинг**: оптимизация бандла
+- **CDN**: быстрая доставка через Vercel
+
+## 🌐 SEO и социальные сети
+
+- **Open Graph**: красивые превью в WhatsApp, Facebook
+- **Twitter Cards**: оптимизация для Twitter
+- **Meta теги**: полное SEO покрытие
+- **Favicon**: набор иконок для всех устройств
+
+## 🤝 Вклад в проект
+
+1. Форкните репозиторий
+2. Создайте ветку для фичи (`git checkout -b feature/amazing-feature`)
+3. Зафиксируйте изменения (`git commit -m 'Add amazing feature'`)
+4. Отправьте в ветку (`git push origin feature/amazing-feature`)
+5. Откройте Pull Request
+
+## 📄 Лицензия
+
+Этот проект создан для ветеринарной клиники "МОРЕ". Все права защищены.
+
+## 📞 Контакты
+
+- **Телефон**: +7 (925) 092-02-72
+- **Email**: vetcenter-more@mail.ru
+- **Telegram**: [@vetclinic_more](https://t.me/+79250920272)
+
+---
+
+<div align="center">
+  
+**🐾 Сделано с ❤️ для заботы о ваших питомцах 🐾**
+
+[🌐 Открыть приложение](https://petpal-clinic-app-92753.vercel.app) | [📱 Записаться на прием](https://t.me/+79250920272)
+
+</div>

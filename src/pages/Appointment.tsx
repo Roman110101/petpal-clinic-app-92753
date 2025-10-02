@@ -1,13 +1,16 @@
 import { AppointmentForm } from "@/components/AppointmentForm";
+import { PageHeader } from "@/components/PageHeader";
+import { Calendar } from "lucide-react";
 
 const Appointment = () => {
   return (
-    <div className="pb-20 bg-background min-h-screen">
+    <div className="bg-background min-h-screen pt-16 ios-scroll-fix">
       {/* Header */}
-      <header className="bg-[var(--gradient-hero)] text-primary-foreground px-4 py-6 rounded-b-3xl shadow-[var(--shadow-soft)]">
-        <h1 className="text-2xl font-bold">Запись на приём</h1>
-        <p className="text-sm opacity-90 mt-1">Выберите удобное время</p>
-      </header>
+      <PageHeader 
+        title="Запись на приём" 
+        subtitle="Выберите удобное время"
+        icon={<Calendar className="w-6 h-6" />}
+      />
 
       {/* Form */}
       <section className="px-4 mt-6">

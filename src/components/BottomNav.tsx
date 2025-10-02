@@ -1,17 +1,35 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Home, Calendar, Stethoscope, MapPin } from "lucide-react";
+import { useEffect } from "react";
 
 export const BottomNav = () => {
+  const location = useLocation();
+  
+  // Закрываем мобильное меню при изменении маршрута
+  useEffect(() => {
+    // Ищем открытое мобильное меню и закрываем его
+    const mobileMenu = document.querySelector('.mobile-menu-aside') as HTMLElement;
+    if (mobileMenu && mobileMenu.style.transform === 'translateX(0px)') {
+      // Эмулируем клик по кнопке закрытия
+      const closeButton = mobileMenu.querySelector('button[aria-label="Закрыть меню"]') as HTMLButtonElement;
+      if (closeButton) {
+        closeButton.click();
+      }
+    }
+  }, [location.pathname]);
+  
+  // Навигация всегда видна
+  const shouldHide = false;
   const navItems = [
-    { to: "/", icon: Home, label: "Главная" },
-    { to: "/services", icon: Stethoscope, label: "Услуги" },
-    { to: "/branches", icon: MapPin, label: "Филиалы" },
-    { to: "/appointment", icon: Calendar, label: "Запись" },
+    { to: "/", icon: Home, label: "Главная", color: "text-blue-500" },
+    { to: "/services", icon: Stethoscope, label: "Услуги", color: "text-green-500" },
+    { to: "/branches", icon: MapPin, label: "Филиалы", color: "text-red-500" },
+    { to: "/appointment", icon: Calendar, label: "Запись", color: "text-purple-500" },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-[0_-4px_20px_-4px_hsl(var(--primary)_/_0.1)] z-50">
-      <div className="flex justify-around items-center h-16 max-w-md mx-auto px-2">
+    <nav className={`fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-[9999] transition-transform duration-300 ${shouldHide ? 'translate-y-full' : 'translate-y-0'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="flex justify-around items-center h-16 max-w-md md:max-w-none mx-auto px-2">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -26,8 +44,8 @@ export const BottomNav = () => {
           >
             {({ isActive }) => (
               <>
-                <item.icon className={`w-6 h-6 mb-1 ${isActive ? "scale-110" : ""}`} />
-                <span className="text-xs font-medium">{item.label}</span>
+                <item.icon className={`w-6 h-6 mb-1 ${isActive ? "scale-110 text-primary" : item.color}`} />
+                <span className={`text-sm font-medium ${isActive ? "" : "text-muted-foreground"}`}>{item.label}</span>
               </>
             )}
           </NavLink>

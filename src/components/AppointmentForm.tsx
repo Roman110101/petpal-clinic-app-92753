@@ -36,94 +36,96 @@ export const AppointmentForm = () => {
   };
 
   return (
-    <Card className="p-6 md:p-8 bg-[var(--gradient-card)] border-border shadow-[var(--shadow-soft)]">
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <Card className="p-4 bg-card border-border shadow-sm">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="name" className="text-foreground">Ваше имя</Label>
+          <div className="flex flex-col">
+            <Label htmlFor="name" className="text-foreground text-sm mb-1">Ваше имя</Label>
             <Input
               id="name"
+              placeholder="Введите ваше имя"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              className="mt-2 bg-background"
+              className="bg-background h-10"
             />
           </div>
 
-          <div>
-            <Label htmlFor="phone" className="text-foreground">Телефон</Label>
+          <div className="flex flex-col">
+            <Label htmlFor="phone" className="text-foreground text-sm mb-1">Телефон</Label>
             <Input
               id="phone"
               type="tel"
+              placeholder="+7"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               required
-              className="mt-2 bg-background"
+              className="bg-background h-10"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="petName" className="text-foreground">Имя питомца</Label>
-              <Input
-                id="petName"
-                value={formData.petName}
-                onChange={(e) => setFormData({ ...formData, petName: e.target.value })}
-                required
-                className="mt-2 bg-background"
-              />
-            </div>
-            <div>
-              <Label htmlFor="petType" className="text-foreground">Тип питомца</Label>
-              <Input
-                id="petType"
-                placeholder="Собака, кошка, и т.д."
-                value={formData.petType}
-                onChange={(e) => setFormData({ ...formData, petType: e.target.value })}
-                required
-                className="mt-2 bg-background"
-              />
-            </div>
+          <div className="flex flex-col">
+            <Label htmlFor="petName" className="text-foreground text-sm mb-1">Имя питомца</Label>
+            <Input
+              id="petName"
+              placeholder="Имя вашего питомца"
+              value={formData.petName}
+              onChange={(e) => setFormData({ ...formData, petName: e.target.value })}
+              required
+              className="bg-background h-10"
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="date" className="text-foreground">Дата</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                required
-                className="mt-2 bg-background"
-              />
-            </div>
-            <div>
-              <Label htmlFor="time" className="text-foreground">Время</Label>
-              <Input
-                id="time"
-                type="time"
-                value={formData.time}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                required
-                className="mt-2 bg-background"
-              />
-            </div>
+          <div className="flex flex-col">
+            <Label htmlFor="petType" className="text-foreground text-sm mb-1">Тип питомца</Label>
+            <Input
+              id="petType"
+              placeholder="Собака, кошка, хомяк и т.д."
+              value={formData.petType}
+              onChange={(e) => setFormData({ ...formData, petType: e.target.value })}
+              required
+              className="bg-background h-10"
+            />
           </div>
 
-          <div>
-            <Label htmlFor="notes" className="text-foreground">Дополнительная информация</Label>
-            <Textarea
+          <div className="flex flex-col">
+            <Label htmlFor="date" className="text-foreground text-sm mb-1">Дата приема</Label>
+            <Input
+              id="date"
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              required
+              className="bg-background h-10"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <Label htmlFor="time" className="text-foreground text-sm mb-1">Время приема</Label>
+            <Input
+              id="time"
+              type="time"
+              value={formData.time}
+              onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+              required
+              className="bg-background h-10"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <Label htmlFor="notes" className="text-foreground text-sm mb-1">Дополнительная информация</Label>
+              <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Опишите причину визита или особенности здоровья питомца"
-              className="mt-2 bg-background min-h-[100px]"
+              placeholder="Опишите причину визита или дополнительную информацию"
+              className="bg-background min-h-[60px] resize-none"
+              style={{ fontSize: '16px' }}
             />
           </div>
         </div>
 
-        <Button type="submit" variant="hero" size="lg" className="w-full">
+        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3">
           Записаться на приём
         </Button>
       </form>
