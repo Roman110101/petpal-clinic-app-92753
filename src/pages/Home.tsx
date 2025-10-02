@@ -23,6 +23,9 @@ import {
   Building2,
   ChevronRight,
 } from "lucide-react";
+import heroImage from "@/assets/hero-dog.jpg";
+import logoImage from "@/assets/logo.png";
+import aboutImage from "@/assets/about-clinic.jpg";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -30,91 +33,85 @@ const Home = () => {
   return (
     <div className="pb-20 bg-background min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-[var(--gradient-hero)] text-primary-foreground px-4 py-16 rounded-b-3xl shadow-[var(--shadow-soft)] overflow-hidden animate-fade-in">
-        {/* Background decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-foreground/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary-foreground/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-        
-        <div className="relative text-center space-y-6">
-          {/* Logo with animation */}
-          <div className="w-28 h-28 mx-auto bg-primary-foreground/10 backdrop-blur-sm rounded-3xl border-2 border-primary-foreground/30 flex items-center justify-center shadow-lg hover-scale animate-scale-in">
-            <PawPrint className="w-14 h-14 text-primary-foreground" />
-          </div>
+      <section className="relative overflow-hidden">
+        {/* Hero Image */}
+        <div className="relative h-[500px]">
+          <img 
+            src={heroImage} 
+            alt="Ветеринарный центр Море" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60"></div>
           
-          {/* Title and subtitle */}
-          <div className="space-y-3 animate-fade-in" style={{animationDelay: "0.1s"}}>
-            <h1 className="text-4xl font-bold tracking-tight">
-              Верные Друзья
+          {/* Content overlay */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-white">
+            {/* Logo */}
+            <div className="mb-6">
+              <img 
+                src={logoImage} 
+                alt="Логотип Море" 
+                className="w-24 h-24 object-contain drop-shadow-lg"
+              />
+            </div>
+            
+            {/* Title */}
+            <h1 className="text-3xl md:text-5xl font-semibold tracking-tight text-center mb-2">
+              Ветеринарный центр Море
             </h1>
-            <p className="text-lg text-primary-foreground/90 font-medium">
-              Ветеринарная клиника
+            <p className="text-base md:text-lg text-white/90 text-center mb-8 max-w-md">
+              Профессиональная забота о здоровье ваших питомцев
             </p>
-            <p className="text-sm text-primary-foreground/70 max-w-md mx-auto">
-              Профессиональная забота о здоровье ваших питомцев с 2010 года
-            </p>
-          </div>
 
-          {/* CTA Button */}
-          <div className="pt-2 animate-fade-in" style={{animationDelay: "0.2s"}}>
+            {/* CTA Button */}
             <Button 
               size="lg"
-              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 shadow-lg hover:shadow-xl transition-all hover-scale px-8 py-6 text-base font-semibold"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg px-8 py-6 text-base font-medium"
               onClick={() => navigate("/appointment")}
             >
               <Calendar className="w-5 h-5 mr-2" />
               Записаться онлайн
             </Button>
           </div>
+        </div>
+      </section>
 
-          {/* Quick stats */}
-          <div className="grid grid-cols-3 gap-4 pt-6 max-w-md mx-auto animate-fade-in" style={{animationDelay: "0.3s"}}>
-            <div className="text-center">
-              <div className="text-2xl font-bold">14+</div>
-              <div className="text-xs text-primary-foreground/70">лет опыта</div>
+      {/* About Clinic Section */}
+      <section className="px-4 py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            {/* Image */}
+            <div className="order-2 md:order-1">
+              <img 
+                src={aboutImage} 
+                alt="О нашей клинике" 
+                className="w-full h-[300px] md:h-[400px] object-cover rounded-2xl shadow-[var(--shadow-soft)]"
+              />
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">4</div>
-              <div className="text-xs text-primary-foreground/70">филиала</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">24/7</div>
-              <div className="text-xs text-primary-foreground/70">на Таганке</div>
+            
+            {/* Text Content */}
+            <div className="order-1 md:order-2 space-y-4">
+              <h2 className="text-2xl md:text-3xl font-semibold text-foreground">
+                Комплексная забота о здоровье вашего питомца
+              </h2>
+              <p className="text-base text-muted-foreground leading-relaxed">
+                Мы современная клиника полного цикла, где объединены передовые технологии, узкопрофильные специалисты и многолетний опыт для оказания помощи любой сложности.
+              </p>
+              <p className="text-base text-muted-foreground leading-relaxed">
+                Доверяя нам здоровье своего питомца, вы выбираете надежность, экспертизу и заботу!
+              </p>
+              <p className="text-lg font-medium text-primary pt-2">
+                Ветеринарный центр «Море»: Глубокие знания. Широкие возможности.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Разделы сайта */}
-      <section className="px-4 mt-6 animate-fade-in" style={{animationDelay: "0.2s"}}>
-        <h2 className="text-lg font-bold text-foreground mb-4">Разделы сайта</h2>
+      <section className="px-4 mt-8">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Разделы сайта</h2>
         
         <Accordion type="single" collapsible className="space-y-3">
-          {/* О клинике */}
-          <AccordionItem value="about" className="border-none">
-            <Card className="overflow-hidden">
-              <AccordionTrigger className="px-4 py-4 hover:no-underline">
-                <div className="flex items-center gap-3 text-left">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Heart className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">О клинике</h3>
-                    <p className="text-xs text-muted-foreground">Наша история и ценности</p>
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
-                <div className="space-y-3 pt-2">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Здесь будет информация о клинике, её истории, миссии и ценностях.
-                  </p>
-                  <div className="h-24 bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
-                    <span className="text-xs text-muted-foreground">Место для контента</span>
-                  </div>
-                </div>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
 
           {/* Филиалы */}
           <AccordionItem value="branches" className="border-none">
@@ -331,8 +328,8 @@ const Home = () => {
       </section>
 
       {/* Quick Actions */}
-      <section className="px-4 mt-8 animate-fade-in" style={{animationDelay: "0.4s"}}>
-        <h2 className="text-lg font-bold text-foreground mb-4">Быстрые действия</h2>
+      <section className="px-4 mt-12">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Быстрые действия</h2>
         <div className="grid grid-cols-2 gap-3">
           <Button
             variant="default"
@@ -370,8 +367,8 @@ const Home = () => {
       </section>
 
       {/* Our Advantages */}
-      <section className="px-4 mt-8 animate-fade-in" style={{animationDelay: "0.5s"}}>
-        <h2 className="text-lg font-bold text-foreground mb-4">Наши преимущества</h2>
+      <section className="px-4 mt-12">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Наши преимущества</h2>
         <div className="grid grid-cols-2 gap-3">
           <Card className="p-4 bg-[var(--gradient-card)] border-border hover:shadow-[var(--shadow-hover)] transition-all hover-scale">
             <div className="flex flex-col items-center text-center space-y-3">
