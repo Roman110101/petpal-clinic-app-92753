@@ -29,25 +29,56 @@ const Home = () => {
 
   return (
     <div className="pb-20 bg-background min-h-screen">
-      {/* Hero Section - Место для логотипа и кнопки */}
-      <section className="bg-[var(--gradient-hero)] text-primary-foreground px-4 py-12 rounded-b-3xl shadow-[var(--shadow-soft)] animate-fade-in">
-        <div className="text-center space-y-6">
-          {/* Место под логотип */}
-          <div className="w-32 h-32 mx-auto bg-primary-foreground/10 rounded-3xl border-2 border-primary-foreground/20 border-dashed flex items-center justify-center">
-            <PawPrint className="w-16 h-16 opacity-50" />
+      {/* Hero Section */}
+      <section className="relative bg-[var(--gradient-hero)] text-primary-foreground px-4 py-16 rounded-b-3xl shadow-[var(--shadow-soft)] overflow-hidden animate-fade-in">
+        {/* Background decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-foreground/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary-foreground/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+        
+        <div className="relative text-center space-y-6">
+          {/* Logo with animation */}
+          <div className="w-28 h-28 mx-auto bg-primary-foreground/10 backdrop-blur-sm rounded-3xl border-2 border-primary-foreground/30 flex items-center justify-center shadow-lg hover-scale animate-scale-in">
+            <PawPrint className="w-14 h-14 text-primary-foreground" />
           </div>
           
-          {/* Место под заголовок */}
-          <div className="space-y-2">
-            <div className="h-8 w-48 mx-auto bg-primary-foreground/10 rounded-lg border border-primary-foreground/20 border-dashed"></div>
-            <div className="h-5 w-32 mx-auto bg-primary-foreground/10 rounded border border-primary-foreground/20 border-dashed"></div>
+          {/* Title and subtitle */}
+          <div className="space-y-3 animate-fade-in" style={{animationDelay: "0.1s"}}>
+            <h1 className="text-4xl font-bold tracking-tight">
+              Верные Друзья
+            </h1>
+            <p className="text-lg text-primary-foreground/90 font-medium">
+              Ветеринарная клиника
+            </p>
+            <p className="text-sm text-primary-foreground/70 max-w-md mx-auto">
+              Профессиональная забота о здоровье ваших питомцев с 2010 года
+            </p>
           </div>
 
-          {/* Место под кнопку "Записаться онлайн" */}
-          <div className="pt-4">
-            <div className="h-14 w-64 mx-auto bg-secondary/20 rounded-xl border-2 border-secondary/30 border-dashed flex items-center justify-center">
+          {/* CTA Button */}
+          <div className="pt-2 animate-fade-in" style={{animationDelay: "0.2s"}}>
+            <Button 
+              size="lg"
+              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 shadow-lg hover:shadow-xl transition-all hover-scale px-8 py-6 text-base font-semibold"
+              onClick={() => navigate("/appointment")}
+            >
               <Calendar className="w-5 h-5 mr-2" />
-              <span className="text-sm font-semibold">Записаться онлайн</span>
+              Записаться онлайн
+            </Button>
+          </div>
+
+          {/* Quick stats */}
+          <div className="grid grid-cols-3 gap-4 pt-6 max-w-md mx-auto animate-fade-in" style={{animationDelay: "0.3s"}}>
+            <div className="text-center">
+              <div className="text-2xl font-bold">14+</div>
+              <div className="text-xs text-primary-foreground/70">лет опыта</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">4</div>
+              <div className="text-xs text-primary-foreground/70">филиала</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">24/7</div>
+              <div className="text-xs text-primary-foreground/70">на Таганке</div>
             </div>
           </div>
         </div>
@@ -152,8 +183,8 @@ const Home = () => {
             </Card>
           </AccordionItem>
 
-          {/* Услуги */}
-          <AccordionItem value="services" className="border-none">
+          {/* Прайс-лист */}
+          <AccordionItem value="price" className="border-none">
             <Card className="overflow-hidden">
               <AccordionTrigger className="px-4 py-4 hover:no-underline">
                 <div className="flex items-center gap-3 text-left">
@@ -161,8 +192,8 @@ const Home = () => {
                     <Stethoscope className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">Услуги</h3>
-                    <p className="text-xs text-muted-foreground">16 видов ветеринарной помощи</p>
+                    <h3 className="font-semibold text-foreground">Прайс-лист</h3>
+                    <p className="text-xs text-muted-foreground">Стоимость услуг</p>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -173,11 +204,93 @@ const Home = () => {
                     className="w-full justify-between"
                     onClick={() => navigate("/services")}
                   >
-                    <span>Посмотреть все услуги</span>
+                    <span>Посмотреть полный прайс-лист</span>
                     <ChevronRight className="w-4 h-4" />
                   </Button>
-                  <div className="h-32 bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
-                    <span className="text-xs text-muted-foreground">Место для краткого описания</span>
+                  <div className="space-y-2">
+                    {[
+                      { service: "Первичный прием", price: "800 ₽" },
+                      { service: "Вакцинация", price: "от 500 ₽" },
+                      { service: "УЗИ диагностика", price: "от 1500 ₽" },
+                      { service: "Хирургия", price: "от 3000 ₽" },
+                    ].map((item) => (
+                      <div key={item.service} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                        <span className="text-sm text-foreground">{item.service}</span>
+                        <span className="text-sm font-semibold text-primary">{item.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </AccordionContent>
+            </Card>
+          </AccordionItem>
+
+          {/* Полезные статьи */}
+          <AccordionItem value="articles" className="border-none">
+            <Card className="overflow-hidden">
+              <AccordionTrigger className="px-4 py-4 hover:no-underline">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="p-2 rounded-lg bg-accent/10">
+                    <Award className="w-5 h-5 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">Полезные статьи</h3>
+                    <p className="text-xs text-muted-foreground">Советы по уходу за питомцами</p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="space-y-3 pt-2">
+                  <div className="space-y-2">
+                    {[
+                      "Как подготовить питомца к вакцинации",
+                      "Правильное питание для собак",
+                      "Уход за зубами кошек",
+                      "Первая помощь при травмах",
+                    ].map((article) => (
+                      <div key={article} className="p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                        <p className="text-sm text-foreground">{article}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Читать далее →</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </AccordionContent>
+            </Card>
+          </AccordionItem>
+
+          {/* Чеклист по уходу */}
+          <AccordionItem value="checklist" className="border-none">
+            <Card className="overflow-hidden">
+              <AccordionTrigger className="px-4 py-4 hover:no-underline">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="p-2 rounded-lg bg-secondary/10">
+                    <Shield className="w-5 h-5 text-secondary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">Чеклист по уходу за животными</h3>
+                    <p className="text-xs text-muted-foreground">Важные рекомендации</p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="space-y-3 pt-2">
+                  <div className="space-y-2">
+                    {[
+                      { task: "Регулярные осмотры у ветеринара", period: "Каждые 6 месяцев" },
+                      { task: "Вакцинация", period: "По графику" },
+                      { task: "Обработка от паразитов", period: "Ежемесячно" },
+                      { task: "Уход за зубами", period: "Ежедневно" },
+                      { task: "Физическая активность", period: "Ежедневно" },
+                    ].map((item) => (
+                      <div key={item.task} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                        <div className="mt-0.5 w-4 h-4 rounded border-2 border-primary flex-shrink-0"></div>
+                        <div className="flex-1">
+                          <p className="text-sm text-foreground font-medium">{item.task}</p>
+                          <p className="text-xs text-muted-foreground">{item.period}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </AccordionContent>
@@ -256,37 +369,54 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Branches Preview */}
+      {/* Our Advantages */}
       <section className="px-4 mt-8 animate-fade-in" style={{animationDelay: "0.5s"}}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-foreground">Наши филиалы</h2>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate("/branches")}
-            className="text-primary"
-          >
-            Все
-          </Button>
-        </div>
-        <div className="space-y-3">
-          <Card className="p-4 bg-card hover:shadow-[var(--shadow-hover)] transition-all hover-scale cursor-pointer" onClick={() => navigate("/branches")}>
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">Филиал на Арбате</p>
-                <p className="text-xs text-muted-foreground mt-1">ул. Арбат, д. 15 • м. Арбатская</p>
-                <p className="text-xs text-primary mt-1">Пн-Вс: 8:00 - 22:00</p>
+        <h2 className="text-lg font-bold text-foreground mb-4">Наши преимущества</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="p-4 bg-[var(--gradient-card)] border-border hover:shadow-[var(--shadow-hover)] transition-all hover-scale">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="p-3 rounded-full bg-primary/10">
+                <Award className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">14 лет опыта</h3>
+                <p className="text-xs text-muted-foreground mt-1">Профессиональная команда врачей</p>
               </div>
             </div>
           </Card>
-          <Card className="p-4 bg-card hover:shadow-[var(--shadow-hover)] transition-all hover-scale cursor-pointer" onClick={() => navigate("/branches")}>
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">Филиал на Таганке</p>
-                <p className="text-xs text-muted-foreground mt-1">Таганская площадь, д. 3 • м. Таганская</p>
-                <p className="text-xs text-secondary font-medium mt-1">Круглосуточно</p>
+          
+          <Card className="p-4 bg-[var(--gradient-card)] border-border hover:shadow-[var(--shadow-hover)] transition-all hover-scale">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="p-3 rounded-full bg-secondary/10">
+                <Clock className="w-6 h-6 text-secondary" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Работаем 24/7</h3>
+                <p className="text-xs text-muted-foreground mt-1">Круглосуточная помощь на Таганке</p>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-4 bg-[var(--gradient-card)] border-border hover:shadow-[var(--shadow-hover)] transition-all hover-scale">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="p-3 rounded-full bg-accent/10">
+                <Shield className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Современное оборудование</h3>
+                <p className="text-xs text-muted-foreground mt-1">Точная диагностика</p>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-4 bg-[var(--gradient-card)] border-border hover:shadow-[var(--shadow-hover)] transition-all hover-scale">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="p-3 rounded-full bg-primary/10">
+                <Heart className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Индивидуальный подход</h3>
+                <p className="text-xs text-muted-foreground mt-1">Забота о каждом питомце</p>
               </div>
             </div>
           </Card>
