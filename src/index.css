@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 180 40% 98%;
+    --foreground: 200 20% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 200 20% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 20% 15%;
+
+    --primary: 180 65% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 180 75% 55%;
+
+    --secondary: 25 90% 65%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 180 30% 94%;
+    --muted-foreground: 200 15% 50%;
+
+    --accent: 180 70% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 180 25% 88%;
+    --input: 180 25% 88%;
+    --ring: 180 65% 45%;
+
+    --radius: 1rem;
+
+    --gradient-hero: linear-gradient(135deg, hsl(180 65% 45%) 0%, hsl(180 75% 55%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(180 40% 98%) 100%);
+    --shadow-soft: 0 4px 20px -4px hsl(180 65% 45% / 0.15);
+    --shadow-hover: 0 8px 30px -6px hsl(180 65% 45% / 0.25);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 200 30% 8%;
+    --foreground: 180 15% 90%;
+
+    --card: 200 25% 12%;
+    --card-foreground: 180 15% 90%;
+
+    --popover: 200 25% 12%;
+    --popover-foreground: 180 15% 90%;
+
+    --primary: 180 70% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 180 75% 60%;
+
+    --secondary: 25 85% 60%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 200 25% 16%;
+    --muted-foreground: 180 10% 60%;
+
+    --accent: 180 70% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 20% 20%;
+    --input: 200 20% 20%;
+    --ring: 180 70% 50%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(180 70% 35%) 0%, hsl(180 70% 50%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(200 25% 12%) 0%, hsl(200 25% 14%) 100%);
+    --shadow-soft: 0 4px 20px -4px hsl(180 70% 50% / 0.2);
+    --shadow-hover: 0 8px 30px -6px hsl(180 70% 50% / 0.3);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105 active:scale-95;
+  }
+}
