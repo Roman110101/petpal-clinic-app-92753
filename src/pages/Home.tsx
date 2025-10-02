@@ -75,43 +75,51 @@ const Home = () => {
         </div>
       </section>
 
-      {/* About Clinic Section */}
-      <section className="px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            {/* Image */}
-            <div className="order-2 md:order-1">
-              <img 
-                src={aboutImage} 
-                alt="О нашей клинике" 
-                className="w-full h-[300px] md:h-[400px] object-cover rounded-2xl shadow-[var(--shadow-soft)]"
-              />
-            </div>
-            
-            {/* Text Content */}
-            <div className="order-1 md:order-2 space-y-4">
-              <h2 className="text-2xl md:text-3xl font-semibold text-foreground">
-                Комплексная забота о здоровье вашего питомца
-              </h2>
-              <p className="text-base text-muted-foreground leading-relaxed">
-                Мы современная клиника полного цикла, где объединены передовые технологии, узкопрофильные специалисты и многолетний опыт для оказания помощи любой сложности.
-              </p>
-              <p className="text-base text-muted-foreground leading-relaxed">
-                Доверяя нам здоровье своего питомца, вы выбираете надежность, экспертизу и заботу!
-              </p>
-              <p className="text-lg font-medium text-primary pt-2">
-                Ветеринарный центр «Море»: Глубокие знания. Широкие возможности.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Разделы сайта */}
       <section className="px-4 mt-8">
         <h2 className="text-xl font-semibold text-foreground mb-4">Разделы сайта</h2>
         
         <Accordion type="single" collapsible className="space-y-3">
+          {/* О клинике */}
+          <AccordionItem value="about" className="border-none">
+            <Card className="overflow-hidden">
+              <AccordionTrigger className="px-4 py-4 hover:no-underline">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Heart className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">О клинике</h3>
+                    <p className="text-xs text-muted-foreground">Комплексная забота о питомцах</p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="space-y-4 pt-2">
+                  <img 
+                    src={aboutImage} 
+                    alt="О нашей клинике" 
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <div className="space-y-3">
+                    <h4 className="text-base font-semibold text-foreground">
+                      Комплексная забота о здоровье вашего питомца
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Мы современная клиника полного цикла, где объединены передовые технологии, узкопрофильные специалисты и многолетний опыт для оказания помощи любой сложности.
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Доверяя нам здоровье своего питомца, вы выбираете надежность, экспертизу и заботу!
+                    </p>
+                    <p className="text-sm font-medium text-primary">
+                      Ветеринарный центр «Море»: Глубокие знания. Широкие возможности.
+                    </p>
+                  </div>
+                </div>
+              </AccordionContent>
+            </Card>
+          </AccordionItem>
 
           {/* Филиалы */}
           <AccordionItem value="branches" className="border-none">
