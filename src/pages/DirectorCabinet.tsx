@@ -1168,16 +1168,16 @@ const DirectorCabinet = () => {
           </div>
 
           {showEmployees && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
               {employees.map((employee) => (
-              <div key={employee.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              <div key={employee.id} className="p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
                     {employee.name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1 mb-1">
-                      <h4 className="font-semibold text-sm truncate">{employee.name}</h4>
+                      <h4 className="font-semibold text-xs sm:text-sm truncate">{employee.name}</h4>
                       {employee.position === 'Директор' && <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />}
                       {employee.experience >= 10 && <Star className="w-3 h-3 text-blue-500 flex-shrink-0" />}
                     </div>
@@ -1188,7 +1188,7 @@ const DirectorCabinet = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-1 sm:space-y-2">
                   <div className="flex justify-between items-start">
                     <span className="text-xs text-muted-foreground">Зарплата:</span>
                     <div className="text-right">
@@ -1199,14 +1199,14 @@ const DirectorCabinet = () => {
                             value={tempSalary}
                             onChange={(e) => setTempSalary(e.target.value)}
                             onKeyDown={handleSalaryKeyPress}
-                            className="text-xs h-7 w-20"
+                            className="text-xs h-6 sm:h-7 w-16 sm:w-20"
                             autoFocus
                           />
                           <div className="flex gap-1">
                             <Button
                               size="sm"
                               onClick={saveSalaryEdit}
-                              className="h-5 px-2 text-xs bg-green-600 hover:bg-green-700"
+                              className="h-4 sm:h-5 px-1 sm:px-2 text-xs bg-green-600 hover:bg-green-700"
                             >
                               ✓
                             </Button>
@@ -1214,7 +1214,7 @@ const DirectorCabinet = () => {
                               size="sm"
                               variant="outline"
                               onClick={cancelSalaryEdit}
-                              className="h-5 px-2 text-xs"
+                              className="h-4 sm:h-5 px-1 sm:px-2 text-xs"
                             >
                               ✕
                             </Button>
@@ -1223,7 +1223,7 @@ const DirectorCabinet = () => {
                       ) : (
                         <div className="space-y-1">
                           <span 
-                            className="font-bold text-green-600 text-sm cursor-pointer hover:text-green-700 transition-colors break-words"
+                            className="font-bold text-green-600 text-xs sm:text-sm cursor-pointer hover:text-green-700 transition-colors break-words"
                             onClick={() => startSalaryEdit(employee.id, employee.salary)}
                             title={`Нажмите для редактирования: ${formatCurrency(employee.salary)}`}
                           >
@@ -1244,7 +1244,7 @@ const DirectorCabinet = () => {
                     size="sm" 
                     variant="outline"
                     onClick={() => startEditEmployee(employee)}
-                    className="w-full text-xs mt-2"
+                    className="w-full text-xs mt-1 sm:mt-2 h-7 sm:h-8"
                   >
                     <Edit className="w-3 h-3 mr-1" />
                     Изменить
@@ -1293,10 +1293,10 @@ const DirectorCabinet = () => {
               {getTimeFilterLabel()}
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
               {Object.entries(getDepartmentStats()).map(([dept, stats]) => (
-                <div key={dept} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
-                  <h4 className="font-semibold text-sm mb-2 truncate">{dept}</h4>
+                <div key={dept} className="p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                  <h4 className="font-semibold text-xs sm:text-sm mb-2 truncate">{dept}</h4>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
                       <span>Сотрудников:</span>
@@ -1357,12 +1357,12 @@ const DirectorCabinet = () => {
               {getTimeFilterLabel()}
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Bar Chart */}
               {showBarChart && (
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium">Сотрудники по отделам</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-sm sm:text-base">Сотрудники по отделам</h4>
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -1371,14 +1371,14 @@ const DirectorCabinet = () => {
                       <ChevronUp className="w-4 h-4" />
                     </Button>
                   </div>
-                  <div className="h-64">
+                  <div className="h-48 sm:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={getChartData()}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                        <YAxis tick={{ fontSize: 10 }} />
+                        <XAxis dataKey="name" tick={{ fontSize: 9 }} />
+                        <YAxis tick={{ fontSize: 9 }} />
                         <Tooltip />
-                        <Bar dataKey="employees" fill="#3B82F6" />
+                        <Bar dataKey="employees" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1388,8 +1388,8 @@ const DirectorCabinet = () => {
               {/* Pie Chart */}
               {showPieChart && (
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium">Распределение по отделам</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-sm sm:text-base">Распределение по отделам</h4>
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -1398,25 +1398,46 @@ const DirectorCabinet = () => {
                       <ChevronUp className="w-4 h-4" />
                     </Button>
                   </div>
-                  <div className="h-64">
+                  <div className="h-48 sm:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={getPieChartData()}
                           cx="50%"
                           cy="50%"
-                          innerRadius={40}
-                          outerRadius={80}
-                          paddingAngle={5}
+                          innerRadius={30}
+                          outerRadius={70}
+                          paddingAngle={2}
                           dataKey="value"
+                          animationBegin={0}
+                          animationDuration={1000}
+                          animationEasing="ease-out"
                         >
                           {getPieChartData().map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                          formatter={(value, name, props) => [
+                            `${value} сотрудников (${((value / employees.length) * 100).toFixed(1)}%)`,
+                            props.payload.name
+                          ]}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
+                  </div>
+                  {/* Legend */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-3">
+                    {getPieChartData().map((entry, index) => (
+                      <div key={index} className="flex items-center gap-2 text-xs">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: entry.color }}
+                        />
+                        <span className="truncate">{entry.name}</span>
+                        <span className="font-medium">{entry.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -1424,8 +1445,8 @@ const DirectorCabinet = () => {
               {/* Line Chart */}
               {showLineChart && (
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium">Средняя зарплата по отделам</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-sm sm:text-base">Средняя зарплата по отделам</h4>
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -1434,14 +1455,23 @@ const DirectorCabinet = () => {
                       <ChevronUp className="w-4 h-4" />
                     </Button>
                   </div>
-                  <div className="h-64">
+                  <div className="h-48 sm:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={getChartData()}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                        <YAxis tick={{ fontSize: 10 }} />
+                        <XAxis dataKey="name" tick={{ fontSize: 9 }} />
+                        <YAxis tick={{ fontSize: 9 }} />
                         <Tooltip formatter={(value) => formatCompactCurrency(Number(value))} />
-                        <Line type="monotone" dataKey="avgSalary" stroke="#10B981" strokeWidth={2} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="avgSalary" 
+                          stroke="#10B981" 
+                          strokeWidth={3}
+                          dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, stroke: '#10B981', strokeWidth: 2 }}
+                          animationBegin={0}
+                          animationDuration={1500}
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -1485,33 +1515,33 @@ const DirectorCabinet = () => {
 
       {/* Summary */}
       <section className="px-4 mb-6">
-        <Card className="p-6 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950 border-green-200 dark:border-green-800">
-          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+        <Card className="p-4 sm:p-6 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950 border-green-200 dark:border-green-800">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
             <Building2 className="w-5 h-5" />
             Сводка по зарплатам
           </h3>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-sm sm:text-base lg:text-lg font-bold text-green-600 break-words" title={formatCurrency(totalSalary)}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+            <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="text-xs sm:text-sm font-bold text-green-600 break-words" title={formatCurrency(totalSalary)}>
                 {formatCompactCurrency(totalSalary)}
               </div>
               <div className="text-xs text-muted-foreground">Общий фонд</div>
             </div>
-            <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-sm sm:text-base lg:text-lg font-bold text-red-600 break-words" title={formatCurrency(totalTaxes)}>
+            <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="text-xs sm:text-sm font-bold text-red-600 break-words" title={formatCurrency(totalTaxes)}>
                 {formatCompactCurrency(totalTaxes)}
               </div>
               <div className="text-xs text-muted-foreground">Налоги (13%)</div>
             </div>
-            <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-sm sm:text-base lg:text-lg font-bold text-blue-600 break-words" title={formatCurrency(netSalary)}>
+            <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="text-xs sm:text-sm font-bold text-blue-600 break-words" title={formatCurrency(netSalary)}>
                 {formatCompactCurrency(netSalary)}
               </div>
               <div className="text-xs text-muted-foreground">К выплате</div>
             </div>
-            <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-sm sm:text-base lg:text-lg font-bold text-purple-600 break-words" title={formatCurrency(totalSalary / employees.length)}>
+            <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="text-xs sm:text-sm font-bold text-purple-600 break-words" title={formatCurrency(totalSalary / employees.length)}>
                 {formatCompactCurrency(totalSalary / employees.length)}
               </div>
               <div className="text-xs text-muted-foreground">Средняя ЗП</div>
