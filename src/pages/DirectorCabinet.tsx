@@ -52,6 +52,12 @@ const DirectorCabinet = () => {
     phone: '',
     email: ''
   });
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showSmartCalculator, setShowSmartCalculator] = useState(false);
+  const [smartCalcEmployee, setSmartCalcEmployee] = useState<any>(null);
+  const [smartCalcAmount, setSmartCalcAmount] = useState('');
+  const [smartCalcOperation, setSmartCalcOperation] = useState('add');
+  const [smartCalcHistory, setSmartCalcHistory] = useState<any[]>([]);
 
   // Демо-данные 50 сотрудников
   const demoEmployees = [
@@ -311,6 +317,118 @@ const DirectorCabinet = () => {
     toast.success('Новый сотрудник добавлен');
   };
 
+  // Импорт из Excel
+  const handleExcelImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        // Обрабатываем импортированные данные
+        const importedEmployees = jsonData.map((row: any, index: number) => ({
+          id: employees.length + index + 1,
+          name: row['ФИО'] || row['ФИО'] || `Импортированный сотрудник ${index + 1}`,
+          position: row['Должность'] || row['Позиция'] || 'Сотрудник',
+          department: row['Отдел'] || row['Департамент'] || 'Общий',
+          salary: parseInt(row['Зарплата'] || row['Salary'] || '50000'),
+          experience: parseInt(row['Стаж'] || row['Experience'] || '1'),
+          phone: row['Телефон'] || row['Phone'] || '+7 (999) 000-00-00',
+          email: row['Email'] || row['email'] || `imported${index + 1}@more-clinic.ru`
+        }));
+
+        const updatedEmployees = [...employees, ...importedEmployees];
+        setEmployees(updatedEmployees);
+        calculateTotals(updatedEmployees);
+        setShowImportModal(false);
+        toast.success(`Импортировано ${importedEmployees.length} сотрудников`);
+      } catch (error) {
+        console.error('Ошибка импорта:', error);
+        toast.error('Ошибка при импорте файла');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  // Умный калькулятор для сотрудников
+  const executeSmartCalculation = () => {
+    if (!smartCalcEmployee || !smartCalcAmount) {
+      toast.error('Выберите сотрудника и введите сумму');
+      return;
+    }
+
+    const amount = parseFloat(smartCalcAmount);
+    if (isNaN(amount)) {
+      toast.error('Введите корректную сумму');
+      return;
+    }
+
+    let newSalary = smartCalcEmployee.salary;
+    let operationText = '';
+
+    switch (smartCalcOperation) {
+      case 'add':
+        newSalary += amount;
+        operationText = `+ ${formatCurrency(amount)}`;
+        break;
+      case 'subtract':
+        newSalary = Math.max(0, newSalary - amount);
+        operationText = `- ${formatCurrency(amount)}`;
+        break;
+      case 'multiply':
+        newSalary *= amount;
+        operationText = `× ${amount}`;
+        break;
+      case 'percent':
+        newSalary += (newSalary * amount / 100);
+        operationText = `+ ${amount}%`;
+        break;
+      case 'bonus':
+        newSalary += amount;
+        operationText = `Премия: ${formatCurrency(amount)}`;
+        break;
+      case 'penalty':
+        newSalary = Math.max(0, newSalary - amount);
+        operationText = `Штраф: ${formatCurrency(amount)}`;
+        break;
+    }
+
+    // Сохраняем в историю
+    const calculation = {
+      employee: smartCalcEmployee.name,
+      operation: operationText,
+      oldSalary: smartCalcEmployee.salary,
+      newSalary: newSalary,
+      timestamp: new Date().toLocaleString('ru-RU')
+    };
+    setSmartCalcHistory([calculation, ...smartCalcHistory]);
+
+    // Обновляем зарплату
+    handleSalaryChange(smartCalcEmployee.id, newSalary);
+    
+    // Сбрасываем форму
+    setSmartCalcAmount('');
+    toast.success(`Зарплата ${smartCalcEmployee.name} обновлена: ${formatCurrency(newSalary)}`);
+  };
+
+  // Быстрые операции
+  const applyQuickOperation = (operation: string, value: number) => {
+    if (!smartCalcEmployee) {
+      toast.error('Выберите сотрудника');
+      return;
+    }
+
+    setSmartCalcOperation(operation);
+    setSmartCalcAmount(value.toString());
+    executeSmartCalculation();
+  };
+
   const getDepartmentColor = (department: string) => {
     const colors: { [key: string]: string } = {
       'Терапия': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
@@ -395,13 +513,13 @@ const DirectorCabinet = () => {
 
       {/* Actions */}
       <section className="px-4 mb-6">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Button 
-            onClick={() => setShowCalculator(!showCalculator)}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            onClick={() => setShowSmartCalculator(!showSmartCalculator)}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 col-span-2 lg:col-span-1"
           >
             <Calculator className="w-4 h-4 mr-2" />
-            Калькулятор
+            Умный калькулятор
           </Button>
           <Button 
             onClick={exportToExcel}
@@ -411,11 +529,12 @@ const DirectorCabinet = () => {
             Экспорт Excel
           </Button>
           <Button 
-            onClick={() => setShowHistory(!showHistory)}
+            onClick={() => setShowImportModal(true)}
             variant="outline"
+            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0"
           >
-            <Clock className="w-4 h-4 mr-2" />
-            История
+            <Plus className="w-4 h-4 mr-2" />
+            Импорт Excel
           </Button>
           <Button 
             onClick={() => setEditingEmployee({ id: 0 })}
@@ -426,6 +545,190 @@ const DirectorCabinet = () => {
           </Button>
         </div>
       </section>
+
+      {/* Smart Calculator */}
+      {showSmartCalculator && (
+        <section className="px-4 mb-6">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
+              <Calculator className="w-5 h-5" />
+              Умный калькулятор зарплат
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column - Employee Selection */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-medium">Выберите сотрудника</Label>
+                  <select 
+                    value={smartCalcEmployee?.id || ''}
+                    onChange={(e) => {
+                      const employee = employees.find(emp => emp.id === parseInt(e.target.value));
+                      setSmartCalcEmployee(employee);
+                    }}
+                    className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 text-base"
+                  >
+                    <option value="">-- Выберите сотрудника --</option>
+                    {employees.map(emp => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} - {emp.position} ({formatCurrency(emp.salary)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {smartCalcEmployee && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-blue-900 dark:text-blue-100">
+                          {smartCalcEmployee.name}
+                        </h4>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          {smartCalcEmployee.position} • {smartCalcEmployee.department}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                        Текущая зарплата: {formatCurrency(smartCalcEmployee.salary)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column - Operations */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-medium">Операция</Label>
+                  <select 
+                    value={smartCalcOperation}
+                    onChange={(e) => setSmartCalcOperation(e.target.value)}
+                    className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 text-base"
+                  >
+                    <option value="add">Добавить сумму</option>
+                    <option value="subtract">Вычесть сумму</option>
+                    <option value="multiply">Умножить на число</option>
+                    <option value="percent">Добавить процент</option>
+                    <option value="bonus">Премия</option>
+                    <option value="penalty">Штраф</option>
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Сумма</Label>
+                  <Input
+                    type="number"
+                    value={smartCalcAmount}
+                    onChange={(e) => setSmartCalcAmount(e.target.value)}
+                    placeholder={smartCalcOperation === 'percent' ? 'Процент (например: 10)' : 'Введите сумму'}
+                    className="text-base p-3"
+                  />
+                </div>
+
+                <Button 
+                  onClick={executeSmartCalculation}
+                  disabled={!smartCalcEmployee || !smartCalcAmount}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-base py-3"
+                >
+                  Выполнить операцию
+                </Button>
+
+                {/* Quick Operations */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    onClick={() => applyQuickOperation('bonus', 10000)}
+                    variant="outline"
+                    className="text-green-600 border-green-300 hover:bg-green-50"
+                  >
+                    Премия 10k
+                  </Button>
+                  <Button 
+                    onClick={() => applyQuickOperation('bonus', 25000)}
+                    variant="outline"
+                    className="text-green-600 border-green-300 hover:bg-green-50"
+                  >
+                    Премия 25k
+                  </Button>
+                  <Button 
+                    onClick={() => applyQuickOperation('penalty', 5000)}
+                    variant="outline"
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    Штраф 5k
+                  </Button>
+                  <Button 
+                    onClick={() => applyQuickOperation('percent', 5)}
+                    variant="outline"
+                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  >
+                    +5%
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Calculation History */}
+            {smartCalcHistory.length > 0 && (
+              <div className="mt-6">
+                <h4 className="font-semibold mb-3">История операций</h4>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {smartCalcHistory.map((calc, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div>
+                        <div className="font-medium">{calc.employee}</div>
+                        <div className="text-sm text-muted-foreground">{calc.operation}</div>
+                        <div className="text-xs text-muted-foreground">{calc.timestamp}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-muted-foreground">
+                          {formatCurrency(calc.oldSalary)} → {formatCurrency(calc.newSalary)}
+                        </div>
+                        <div className="font-bold text-green-600">
+                          {formatCurrency(calc.newSalary - calc.oldSalary)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card>
+        </section>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md p-6">
+            <h3 className="text-xl font-semibold mb-4">Импорт из Excel</h3>
+            <p className="text-muted-foreground mb-4">
+              Загрузите Excel файл с данными сотрудников. Поддерживаемые колонки: ФИО, Должность, Отдел, Зарплата, Стаж, Телефон, Email
+            </p>
+            
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleExcelImport}
+              className="w-full p-3 border rounded-lg mb-4"
+            />
+            
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => setShowImportModal(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Отмена
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Real Calculator */}
       {showCalculator && (
@@ -699,44 +1002,47 @@ const DirectorCabinet = () => {
             </div>
           </div>
 
-          <div className="space-y-4 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {employees.map((employee) => (
-              <div key={employee.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-white" />
+              <div key={employee.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    {employee.name.split(' ').map(n => n[0]).join('')}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold">{employee.name}</h4>
-                      {employee.position === 'Директор' && <Crown className="w-4 h-4 text-yellow-500" />}
-                      {employee.experience >= 10 && <Star className="w-4 h-4 text-blue-500" />}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1 mb-1">
+                      <h4 className="font-semibold text-sm truncate">{employee.name}</h4>
+                      {employee.position === 'Директор' && <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />}
+                      {employee.experience >= 10 && <Star className="w-3 h-3 text-blue-500 flex-shrink-0" />}
                     </div>
-                    <p className="text-sm text-muted-foreground">{employee.position}</p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>{employee.department}</span>
-                      <span>{employee.experience} лет стажа</span>
+                    <p className="text-xs text-muted-foreground truncate">{employee.position}</p>
+                    <div className={`inline-block text-xs px-2 py-1 rounded-full mt-1 ${getDepartmentColor(employee.department)}`}>
+                      {employee.department}
                     </div>
                   </div>
                 </div>
                 
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-green-600">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-muted-foreground">Зарплата:</span>
+                    <span className="font-bold text-green-600 text-sm">
                       {formatCurrency(employee.salary)}
-                    </div>
-                    <div className={`text-xs px-2 py-1 rounded-full ${getDepartmentColor(employee.department)} mb-2`}>
-                      {employee.department}
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => startEditEmployee(employee)}
-                      className="text-xs"
-                    >
-                      <Edit className="w-3 h-3 mr-1" />
-                      Изменить
-                    </Button>
+                    </span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-muted-foreground">Стаж:</span>
+                    <span className="text-xs">{employee.experience} лет</span>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => startEditEmployee(employee)}
+                    className="w-full text-xs mt-2"
+                  >
+                    <Edit className="w-3 h-3 mr-1" />
+                    Изменить
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
