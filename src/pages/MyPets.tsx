@@ -22,6 +22,7 @@ import {
   Tag
 } from "lucide-react";
 import { toast } from "sonner";
+import { LocalStorageService } from "@/services/localStorageService";
 
 const MyPets = () => {
   const [pets, setPets] = useState<any[]>([]);
@@ -71,47 +72,80 @@ const MyPets = () => {
     try {
       setIsLoading(true);
       
+      // Сначала загружаем из localStorage
+      const savedPets = LocalStorageService.getPets();
+      if (savedPets.length > 0) {
+        setPets(savedPets);
+        console.log('Loaded pets from localStorage:', savedPets);
+      }
+      
       // Получаем текущего пользователя
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setCurrentUser(user);
         
-        // Получаем питомцев
-        const result = await petsService.getPets(parseInt(user.id));
-        if (result.success && result.data) {
-          setPets(result.data);
-        } else {
-          // Если нет питомцев в базе, показываем демо питомцев для примера
-          setPets([
-            {
-              id: 1,
-              name: "Барсик",
-              species: "cat",
-              breed: "Мейн-кун",
-              age: 3,
-              color: "Рыжий",
-              avatar: null
-            },
-            {
-              id: 2,
-              name: "Рекс",
-              species: "dog", 
-              breed: "Немецкая овчарка",
-              age: 2,
-              color: "Черно-подпалый",
-              avatar: null
+        // Если нет сохраненных питомцев, загружаем из Supabase
+        if (savedPets.length === 0) {
+          try {
+            const result = await petsService.getPets(parseInt(user.id));
+            if (result.success && result.data) {
+              setPets(result.data);
+              LocalStorageService.savePets(result.data);
+            } else {
+              // Если нет питомцев в базе, показываем демо питомцев для примера
+              const demoPets = [
+                {
+                  id: 1,
+                  name: "Барсик",
+                  species: "cat",
+                  breed: "Мейн-кун",
+                  age: 3,
+                  color: "Рыжий",
+                  avatar: null
+                },
+                {
+                  id: 2,
+                  name: "Рекс",
+                  species: "dog", 
+                  breed: "Немецкая овчарка",
+                  age: 2,
+                  color: "Черно-подпалый",
+                  avatar: null
+                }
+              ];
+              setPets(demoPets);
+              LocalStorageService.savePets(demoPets);
             }
-          ]);
+          } catch (petsError) {
+            console.error('Error loading pets from Supabase:', petsError);
+            // Показываем демо данные при ошибке
+            const demoPets = [
+              {
+                id: 1,
+                name: "Барсик",
+                species: "cat",
+                breed: "Мейн-кун",
+                age: 3,
+                color: "Рыжий",
+                avatar: null
+              },
+              {
+                id: 2,
+                name: "Рекс",
+                species: "dog", 
+                breed: "Немецкая овчарка",
+                age: 2,
+                color: "Черно-подпалый",
+                avatar: null
+              }
+            ];
+            setPets(demoPets);
+            LocalStorageService.savePets(demoPets);
+          }
         }
-      }
-    } catch (error: any) {
-      console.error('Error loading pets:', error);
-      
-      // Проверяем тип ошибки
-      if (error?.code === 'PGRST301' || error?.message?.includes('JWT') || error?.message?.includes('cdg1')) {
-        console.log('JWT or ID error detected, showing demo data');
-        // Ошибка токена или ID - показываем демо данные
-        setPets([
+      } else {
+        // Если нет пользователя, показываем демо данные
+        const demoPets = [
           {
             id: 1,
             name: "Барсик",
@@ -130,10 +164,40 @@ const MyPets = () => {
             color: "Черно-подпалый",
             avatar: null
           }
-        ]);
+        ];
+        setPets(demoPets);
+        LocalStorageService.savePets(demoPets);
+      }
+    } catch (error: any) {
+      console.error('Error loading user data:', error);
+      
+      // При любой ошибке загружаем из localStorage или показываем демо данные
+      const savedPets = LocalStorageService.getPets();
+      if (savedPets.length > 0) {
+        setPets(savedPets);
       } else {
-        // Другие ошибки - показываем пустой список
-        setPets([]);
+        const demoPets = [
+          {
+            id: 1,
+            name: "Барсик",
+            species: "cat",
+            breed: "Мейн-кун",
+            age: 3,
+            color: "Рыжий",
+            avatar: null
+          },
+          {
+            id: 2,
+            name: "Рекс",
+            species: "dog", 
+            breed: "Немецкая овчарка",
+            age: 2,
+            color: "Черно-подпалый",
+            avatar: null
+          }
+        ];
+        setPets(demoPets);
+        LocalStorageService.savePets(demoPets);
       }
     } finally {
       setIsLoading(false);
@@ -212,25 +276,47 @@ const MyPets = () => {
         notes: petForm.notes || undefined
       };
 
+      let updatedPets: any[] = [];
+
       if (editingPet) {
         // Редактирование существующего питомца
-        const result = await petsService.updatePet(editingPet.id, petData);
-        if (result.success) {
-          setPets(prev => prev.map(p => p.id === editingPet.id ? { ...p, ...petData } : p));
-          toast.success('Питомец обновлён!');
-        } else {
-          toast.error('Ошибка при обновлении');
+        try {
+          const result = await petsService.updatePet(editingPet.id, petData);
+          if (result.success) {
+            updatedPets = pets.map(p => p.id === editingPet.id ? { ...p, ...petData } : p);
+            toast.success('Питомец обновлён!');
+          } else {
+            throw new Error('Supabase update failed');
+          }
+        } catch (error) {
+          console.log('Supabase update failed, saving locally');
+          // Если Supabase не работает, сохраняем локально
+          updatedPets = pets.map(p => p.id === editingPet.id ? { ...p, ...petData } : p);
+          toast.success('Питомец обновлён (локально)!');
         }
       } else {
         // Добавление нового питомца
-        const result = await petsService.createPet(petData);
-        if (result.success) {
-          setPets(prev => [...prev, { id: Date.now(), ...petData }]);
-          toast.success('Питомец добавлен!');
-        } else {
-          toast.error('Ошибка при добавлении');
+        const newPet = { id: Date.now(), ...petData };
+        try {
+          const result = await petsService.createPet(petData);
+          if (result.success) {
+            updatedPets = [...pets, newPet];
+            toast.success('Питомец добавлен!');
+          } else {
+            throw new Error('Supabase create failed');
+          }
+        } catch (error) {
+          console.log('Supabase create failed, saving locally');
+          // Если Supabase не работает, сохраняем локально
+          updatedPets = [...pets, newPet];
+          toast.success('Питомец добавлен (локально)!');
         }
       }
+
+      // Обновляем состояние и сохраняем в localStorage
+      setPets(updatedPets);
+      LocalStorageService.savePets(updatedPets);
+      console.log('Saved pets to localStorage:', updatedPets);
 
       setShowAddForm(false);
       setShowEditForm(false);
@@ -245,13 +331,28 @@ const MyPets = () => {
     if (!confirm(`Удалить питомца "${pet.name}"?`)) return;
 
     try {
-      const result = await petsService.deletePet(pet.id);
-      if (result.success) {
-        setPets(prev => prev.filter(p => p.id !== pet.id));
-        toast.success('Питомец удалён');
-      } else {
-        toast.error('Ошибка при удалении');
+      let updatedPets: any[] = [];
+      
+      try {
+        const result = await petsService.deletePet(pet.id);
+        if (result.success) {
+          updatedPets = pets.filter(p => p.id !== pet.id);
+          toast.success('Питомец удалён');
+        } else {
+          throw new Error('Supabase delete failed');
+        }
+      } catch (error) {
+        console.log('Supabase delete failed, deleting locally');
+        // Если Supabase не работает, удаляем локально
+        updatedPets = pets.filter(p => p.id !== pet.id);
+        toast.success('Питомец удалён (локально)');
       }
+
+      // Обновляем состояние и сохраняем в localStorage
+      setPets(updatedPets);
+      LocalStorageService.savePets(updatedPets);
+      console.log('Deleted pet, saved to localStorage:', updatedPets);
+      
     } catch (error) {
       console.error('Error deleting pet:', error);
       toast.error('Произошла ошибка');
@@ -265,9 +366,15 @@ const MyPets = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const avatarUrl = e.target?.result as string;
-      setPets(prev => prev.map(p => 
+      const updatedPets = pets.map(p => 
         p.id === pet.id ? { ...p, avatar: avatarUrl } : p
-      ));
+      );
+      
+      // Обновляем состояние и сохраняем в localStorage
+      setPets(updatedPets);
+      LocalStorageService.savePets(updatedPets);
+      console.log('Photo uploaded and saved to localStorage:', pet.name, avatarUrl);
+      
       toast.success('Фото питомца загружено!');
     };
     reader.readAsDataURL(file);

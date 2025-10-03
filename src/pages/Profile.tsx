@@ -16,6 +16,7 @@ import {
   Camera
 } from "lucide-react";
 import { toast } from "sonner";
+import { LocalStorageService } from "@/services/localStorageService";
 
 const ProfileReal = () => {
   const navigate = useNavigate();
@@ -54,12 +55,23 @@ const ProfileReal = () => {
     try {
       setIsLoading(true);
       
+      // Сначала загружаем аватар из localStorage
+      const savedAvatar = LocalStorageService.getUserAvatar();
+      if (savedAvatar) {
+        setUserAvatar(savedAvatar);
+        console.log('Loaded user avatar from localStorage:', savedAvatar);
+      }
+      
       // Получаем текущего пользователя через Supabase
       const { data: { user }, error } = await supabase.auth.getUser();
       
       if (error) {
         console.error('Auth error:', error);
-        // Если ошибка авторизации, перенаправляем на логин
+        // Если ошибка авторизации, но есть сохраненный аватар - показываем его
+        if (savedAvatar) {
+          console.log('Auth error but showing saved avatar');
+          return;
+        }
         navigate('/auth');
         return;
       }
@@ -67,7 +79,11 @@ const ProfileReal = () => {
       if (user) {
         setCurrentUser(user);
       } else {
-        // Если пользователь не авторизован, перенаправляем на авторизацию
+        // Если пользователь не авторизован, но есть сохраненный аватар - показываем его
+        if (savedAvatar) {
+          console.log('No user but showing saved avatar');
+          return;
+        }
         navigate('/auth');
         return;
       }
@@ -76,7 +92,12 @@ const ProfileReal = () => {
       
       // Проверяем тип ошибки
       if (error?.code === 'PGRST301' || error?.message?.includes('JWT')) {
-        // Ошибка токена - перенаправляем на авторизацию
+        // Ошибка токена - если есть сохраненный аватар, показываем его
+        const savedAvatar = LocalStorageService.getUserAvatar();
+        if (savedAvatar) {
+          console.log('JWT error but showing saved avatar');
+          return;
+        }
         navigate('/auth');
       } else {
         // Другие ошибки - показываем сообщение
@@ -91,6 +112,11 @@ const ProfileReal = () => {
   const handleLogout = async () => {
     try {
       await auth.logout();
+      
+      // Очищаем localStorage при выходе
+      LocalStorageService.clearAll();
+      console.log('Cleared localStorage on logout');
+      
       toast.success('Вы вышли из системы');
       navigate('/');
     } catch (error) {
@@ -106,6 +132,11 @@ const ProfileReal = () => {
     reader.onload = (e) => {
       const avatarUrl = e.target?.result as string;
       setUserAvatar(avatarUrl);
+      
+      // Сохраняем в localStorage для персистентности
+      LocalStorageService.saveUserAvatar(avatarUrl);
+      console.log('Avatar saved to localStorage:', avatarUrl);
+      
       toast.success('Аватар обновлён!');
     };
     reader.readAsDataURL(file);
