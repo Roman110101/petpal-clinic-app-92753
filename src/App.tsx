@@ -17,6 +17,7 @@ import Reviews from "./pages/Reviews";
 import Certificates from "./pages/Certificates";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
+import MyPets from "./pages/MyPets";
 import { AuthGuard } from "@/components/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -36,8 +37,9 @@ const App = () => (
             <Route path="/branches" element={<Branches />} />
             <Route path="/appointment" element={<Appointment />} />
             <Route path="/team" element={<Team />} />
-            <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
-            <Route path="/auth" element={<Auth />} />
+                  <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
+                  <Route path="/my-pets" element={<AuthGuard><MyPets /></AuthGuard>} />
+                  <Route path="/auth" element={<Auth />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/certificates" element={<Certificates />} />
             <Route path="/chat" element={<Chat />} />

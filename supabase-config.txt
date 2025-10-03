@@ -1,0 +1,9 @@
+🔧 SUPABASE КОНФИГУРАЦИЯ
+
+Создайте файл .env.local в корне проекта и добавьте эти строки:
+
+VITE_SUPABASE_URL=https://tsnfnxyexajwdrxnpmjo.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzbmZueHlleGFqd2RyeG5wbWpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NjA4NDMsImV4cCI6MjA3NTAzNjg0M30.WVVu3ZyhSzxUbc8kTq62rcj5vdczuJ3czfg_lfLc4kk
+
+✅ Всё готово для подключения к Supabase!
+🚀 Теперь можно создавать таблицы и делать запросы

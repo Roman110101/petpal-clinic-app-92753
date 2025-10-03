@@ -1,0 +1,10 @@
+# Создайте файл .env.local в корне проекта с этими переменными:
+
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+
+# Получить эти значения можно:
+# 1. Зайдите на https://supabase.com
+# 2. Создайте новый проект
+# 3. В разделе Settings > API
+# 4. Скопируйте Project URL и Public anon key

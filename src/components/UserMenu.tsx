@@ -146,7 +146,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenAuth }) => {
               <button
                 onClick={() => {
                   setIsMenuOpen(false);
-                  window.location.href = '/appointment';
+                  window.location.href = '/profile#appointment';
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors"
               >

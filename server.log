@@ -1,0 +1,12 @@
+
+> vite_react_shadcn_ts@0.0.0 server:dev
+> node simple-server.cjs
+
+🚀 Setting up routes...
+📝 All routes configured!
+🚀 SERVER STARTED SUCCESSFULLY!
+📍 Port: 3001
+📡 Health check: http://localhost:3001/api/health
+📡 Register: POST http://localhost:3001/api/auth/register
+📡 Login: POST http://localhost:3001/api/auth/login
+📊 Demo credentials: admin@test.com / demo123

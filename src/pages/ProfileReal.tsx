@@ -109,7 +109,7 @@ const ProfileReal = () => {
         <div className="grid gap-4">
           
           {/* Питомцы */}
-          <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer" onClick={() => window.location.href = '/my-pets'}>
+          <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
                 <PawPrint className="w-6 h-6 text-orange-600" />
@@ -118,31 +118,21 @@ const ProfileReal = () => {
                 <h4 className="font-semibold">Мои питомцы</h4>
                 <p className="text-sm text-muted-foreground">Добавляйте и управляйте информацией о ваших любимцах</p>
               </div>
-              <div className="text-xs text-green-600 font-medium">{'✅ Доступно →'}</div>
+              <div className="text-xs text-blue-600 font-medium">{'Скоро →'}</div>
             </div>
           </Card>
 
           {/* Записи */}
           <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-blue-600" />
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold">Записи на приём</h4>
-                <p className="text-sm text-muted-foreground">Выберите врача, дату и время для записи</p>
-                <div className="mt-2 flex gap-4 text-xs">
-                  <span className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <span>Выбор врача</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Дата и время</span>
-                  </span>
-                </div>
+                <p className="text-sm text-muted-foreground">Бронируйте время для визита к ветеринару</p>
               </div>
-              <div className="text-xs text-green-600 font-medium">{'✅ Активно →'}</div>
+              <div className="text-xs text-blue-600 font-medium">{'Скоро →'}</div>
             </div>
           </Card>
 
@@ -157,6 +147,7 @@ const ProfileReal = () => {
                 <p className="text-sm text-muted-foreground">Просматривайте результаты анализов и рекомендации</p>
               </div>
               <div className="text-xs text-blue-600 font-medium">{'Скоро →'}</div>
+              </div>
             </div>
           </Card>
 
