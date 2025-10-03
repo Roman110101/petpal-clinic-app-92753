@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import * as XLSX from 'xlsx';
 import { toast } from "sonner";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { 
   Calculator, 
   Users, 
@@ -29,7 +30,9 @@ import {
   Crown,
   Shield,
   Star,
-  Edit
+  Edit,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 
 const DirectorCabinet = () => {
@@ -60,6 +63,9 @@ const DirectorCabinet = () => {
   const [smartCalcHistory, setSmartCalcHistory] = useState<any[]>([]);
   const [editingSalaryId, setEditingSalaryId] = useState<number | null>(null);
   const [tempSalary, setTempSalary] = useState('');
+  const [showEmployees, setShowEmployees] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(false);
+  const [showCharts, setShowCharts] = useState(false);
 
   // Демо-данные 50 сотрудников
   const demoEmployees = [
@@ -463,6 +469,46 @@ const DirectorCabinet = () => {
     } else if (e.key === 'Escape') {
       cancelSalaryEdit();
     }
+  };
+
+  // Статистика и графики
+  const getDepartmentStats = () => {
+    const departmentStats: { [key: string]: { count: number, totalSalary: number, avgSalary: number } } = {};
+    
+    employees.forEach(emp => {
+      if (!departmentStats[emp.department]) {
+        departmentStats[emp.department] = { count: 0, totalSalary: 0, avgSalary: 0 };
+      }
+      departmentStats[emp.department].count++;
+      departmentStats[emp.department].totalSalary += emp.salary;
+    });
+
+    Object.keys(departmentStats).forEach(dept => {
+      departmentStats[dept].avgSalary = Math.round(departmentStats[dept].totalSalary / departmentStats[dept].count);
+    });
+
+    return departmentStats;
+  };
+
+  const getChartData = () => {
+    const stats = getDepartmentStats();
+    return Object.keys(stats).map(dept => ({
+      name: dept,
+      employees: stats[dept].count,
+      totalSalary: stats[dept].totalSalary,
+      avgSalary: stats[dept].avgSalary
+    }));
+  };
+
+  const getPieChartData = () => {
+    const stats = getDepartmentStats();
+    const colors = ['#3B82F6', '#EF4444', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#6B7280'];
+    
+    return Object.keys(stats).map((dept, index) => ({
+      name: dept,
+      value: stats[dept].count,
+      color: colors[index % colors.length]
+    }));
   };
 
   const getDepartmentColor = (department: string) => {
@@ -1020,26 +1066,55 @@ const DirectorCabinet = () => {
 
       {/* Employee List */}
       <section className="px-4 mb-6">
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold flex items-center gap-2">
+        <Card className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
               <Users className="w-5 h-5" />
               Список сотрудников ({employees.length})
             </h3>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowStatistics(!showStatistics)}
+                className="flex-1 sm:flex-none"
+              >
                 <BarChart3 className="w-4 h-4 mr-1" />
                 Статистика
               </Button>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowCharts(!showCharts)}
+                className="flex-1 sm:flex-none"
+              >
                 <PieChart className="w-4 h-4 mr-1" />
                 Графики
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowEmployees(!showEmployees)}
+                className="flex-1 sm:flex-none"
+              >
+                {showEmployees ? (
+                  <>
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Скрыть
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                    Показать
+                  </>
+                )}
               </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {employees.map((employee) => (
+          {showEmployees && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {employees.map((employee) => (
               <div key={employee.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex items-start gap-3 mb-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
@@ -1121,10 +1196,116 @@ const DirectorCabinet = () => {
                   </Button>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </section>
+
+      {/* Statistics */}
+      {showStatistics && (
+        <section className="px-4 mb-6">
+          <Card className="p-4 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Статистика по отделам
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(getDepartmentStats()).map(([dept, stats]) => (
+                <div key={dept} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                  <h4 className="font-semibold text-sm mb-2">{dept}</h4>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span>Сотрудников:</span>
+                      <span className="font-medium">{stats.count}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Общий фонд:</span>
+                      <span className="font-medium">{formatCurrency(stats.totalSalary)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Средняя ЗП:</span>
+                      <span className="font-medium text-green-600">{formatCurrency(stats.avgSalary)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {/* Charts */}
+      {showCharts && (
+        <section className="px-4 mb-6">
+          <Card className="p-4 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+              <PieChart className="w-5 h-5" />
+              Графики и диаграммы
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Bar Chart */}
+              <div>
+                <h4 className="font-medium mb-3 text-center">Сотрудники по отделам</h4>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={getChartData()}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip />
+                      <Bar dataKey="employees" fill="#3B82F6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Pie Chart */}
+              <div>
+                <h4 className="font-medium mb-3 text-center">Распределение по отделам</h4>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={getPieChartData()}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {getPieChartData().map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Line Chart */}
+              <div className="lg:col-span-2">
+                <h4 className="font-medium mb-3 text-center">Средняя зарплата по отделам</h4>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={getChartData()}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                      <Line type="monotone" dataKey="avgSalary" stroke="#10B981" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
 
       {/* Summary */}
       <section className="px-4 mb-6">
