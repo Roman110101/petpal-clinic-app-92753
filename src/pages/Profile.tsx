@@ -12,7 +12,8 @@ import {
   Calendar,
   Heart,
   Settings,
-  CheckCircle
+  CheckCircle,
+  Camera
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,6 +21,8 @@ const ProfileReal = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadUserData();
@@ -59,6 +62,22 @@ const ProfileReal = () => {
     }
   };
 
+  const handleAvatarUpload = (file: File) => {
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const avatarUrl = e.target?.result as string;
+      setUserAvatar(avatarUrl);
+      toast.success('Аватар обновлён!');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerAvatarInput = () => {
+    avatarInputRef.current?.click();
+  };
+
   if (isLoading) {
     return (
       <div className="bg-background min-h-screen pt-16">
@@ -87,8 +106,24 @@ const ProfileReal = () => {
       <section className="px-4 mb-6">
         <Card className="p-6">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-              <User className="w-8 h-8 text-primary" />
+            <div className="relative">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+                {userAvatar ? (
+                  <img 
+                    src={userAvatar} 
+                    alt="Аватар пользователя"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-8 h-8 text-primary" />
+                )}
+              </div>
+              <button 
+                onClick={triggerAvatarInput}
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs hover:bg-primary/80 transition-colors"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold">
@@ -154,7 +189,7 @@ const ProfileReal = () => {
           </Card>
 
           {/* История */}
-          <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer">
+          <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer" onClick={() => navigate('/visit-history')}>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
                 <Heart className="w-6 h-6 text-green-600" />
@@ -163,21 +198,21 @@ const ProfileReal = () => {
                 <h4 className="font-semibold">История посещений</h4>
                 <p className="text-sm text-muted-foreground">Просматривайте результаты анализов и рекомендации</p>
               </div>
-              <div className="text-xs text-blue-600 font-medium">{'Скоро →'}</div>
+              <div className="text-xs text-green-600 font-medium">{'✅ Активно →'}</div>
             </div>
           </Card>
 
           {/* Настройки */}
-          <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer">
+          <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer" onClick={() => navigate('/settings')}>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center">
-                <Settings className="w-6 h-6 text-gray-600" />
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                <Settings className="w-6 h-6 text-purple-600" />
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold">Настройки профиля</h4>
                 <p className="text-sm text-muted-foreground">Измените личную информацию и предпочтения</p>
               </div>
-              <div className="text-xs text-blue-600 font-medium">{'Скоро →'}</div>
+              <div className="text-xs text-green-600 font-medium">{'✅ Активно →'}</div>
             </div>
           </Card>
         </div>
@@ -197,6 +232,19 @@ const ProfileReal = () => {
           </p>
         </Card>
       </section>
+
+      {/* Hidden file input for avatar upload */}
+      <input 
+        type="file" 
+        ref={avatarInputRef} 
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleAvatarUpload(e.target.files[0]);
+          }
+        }} 
+        className="hidden" 
+        accept="image/*"
+      />
 
       {/* Bottom Spacing */}
       <div className="h-20"></div>

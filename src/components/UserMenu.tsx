@@ -161,8 +161,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenAuth }) => {
               <button
                 onClick={() => {
                   setIsMenuOpen(false);
-                  // Здесь можно добавить страницу настроек
-                  toast.info('Настройки в разработке');
+                  navigate('/settings');
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors"
               >

@@ -61,8 +61,27 @@ const MyPets = () => {
         if (result.success && result.data) {
           setPets(result.data);
         } else {
-          // Если нет питомцев в базе, показываем пустой список
-          setPets([]);
+          // Если нет питомцев в базе, показываем демо питомцев для примера
+          setPets([
+            {
+              id: 1,
+              name: "Барсик",
+              species: "cat",
+              breed: "Мейн-кун",
+              age: 3,
+              color: "Рыжий",
+              avatar: null
+            },
+            {
+              id: 2,
+              name: "Рекс",
+              species: "dog", 
+              breed: "Немецкая овчарка",
+              age: 2,
+              color: "Черно-подпалый",
+              avatar: null
+            }
+          ]);
         }
       }
     } catch (error) {
@@ -231,18 +250,23 @@ const MyPets = () => {
               <p className="text-muted-foreground">Загружаем информацию о питомцах...</p>
             </div>
           ) : pets.length === 0 ? (
-            <Card className="p-8 text-center">
-              <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
-                <PawPrint className="w-8 h-8 text-muted-foreground" />
+            <Card className="p-8 text-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border-blue-200 dark:border-blue-800">
+              <div className="w-16 h-16 bg-primary/10 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <PawPrint className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="font-semibold mb-2">Питомцев пока нет</h3>
+              <h3 className="font-semibold mb-2 text-foreground">Добро пожаловать!</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Добавьте информацию о ваших любимцах для удобного слежения за их здоровьем
+                Это примеры питомцев. Добавьте своих любимцев или отредактируйте существующие
               </p>
-              <Button onClick={startAddPet}>
-                <Plus className="w-4 h-4 mr-2" />
-                Добавить первого питомца
-              </Button>
+              <div className="flex gap-3 justify-center">
+                <Button onClick={startAddPet} className="bg-primary hover:bg-primary/90">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Добавить питомца
+                </Button>
+                <Button variant="outline" onClick={() => window.location.reload()}>
+                  Обновить список
+                </Button>
+              </div>
             </Card>
           ) : (
             <div className="grid gap-4">
@@ -334,13 +358,18 @@ const MyPets = () => {
         {/* Add/Edit Pet Modal */}
         {showAddForm && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-background rounded-lg shadow-xl border">
               <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-foreground">
                     {editingPet ? 'Редактировать питомца' : 'Добавить питомца'}
                   </h3>
-                  <Button size="sm" variant="outline" onClick={() => setShowAddForm(false)}>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => setShowAddForm(false)}
+                    className="h-8 w-8 p-0 hover:bg-muted"
+                  >
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
@@ -404,18 +433,25 @@ const MyPets = () => {
                     />
                   </div>
 
-                  <div className="flex gap-3 pt-4">
-                    <Button onClick={handleSavePet} className="flex-1">
+                  <div className="flex gap-3 pt-6">
+                    <Button 
+                      onClick={handleSavePet} 
+                      className="flex-1 bg-primary hover:bg-primary/90"
+                    >
                       <Save className="w-4 h-4 mr-2" />
                       {editingPet ? 'Сохранить изменения' : 'Добавить питомца'}
                     </Button>
-                    <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowAddForm(false)}
+                      className="px-6"
+                    >
                       Отмена
                     </Button>
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         )}
 
