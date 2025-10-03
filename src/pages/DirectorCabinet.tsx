@@ -58,6 +58,8 @@ const DirectorCabinet = () => {
   const [smartCalcAmount, setSmartCalcAmount] = useState('');
   const [smartCalcOperation, setSmartCalcOperation] = useState('add');
   const [smartCalcHistory, setSmartCalcHistory] = useState<any[]>([]);
+  const [editingSalaryId, setEditingSalaryId] = useState<number | null>(null);
+  const [tempSalary, setTempSalary] = useState('');
 
   // Демо-данные 50 сотрудников
   const demoEmployees = [
@@ -427,6 +429,40 @@ const DirectorCabinet = () => {
     setSmartCalcOperation(operation);
     setSmartCalcAmount(value.toString());
     executeSmartCalculation();
+  };
+
+  // Прямое редактирование зарплаты
+  const startSalaryEdit = (employeeId: number, currentSalary: number) => {
+    setEditingSalaryId(employeeId);
+    setTempSalary(currentSalary.toString());
+  };
+
+  const saveSalaryEdit = () => {
+    if (editingSalaryId && tempSalary) {
+      const newSalary = parseInt(tempSalary);
+      if (newSalary >= 0) {
+        handleSalaryChange(editingSalaryId, newSalary);
+        setEditingSalaryId(null);
+        setTempSalary('');
+        toast.success('Зарплата обновлена');
+      } else {
+        toast.error('Зарплата не может быть отрицательной');
+      }
+    }
+  };
+
+  const cancelSalaryEdit = () => {
+    setEditingSalaryId(null);
+    setTempSalary('');
+  };
+
+  // Обработка клавиш для редактирования зарплаты
+  const handleSalaryKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      saveSalaryEdit();
+    } else if (e.key === 'Escape') {
+      cancelSalaryEdit();
+    }
   };
 
   const getDepartmentColor = (department: string) => {
@@ -1023,11 +1059,52 @@ const DirectorCabinet = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-start">
                     <span className="text-xs text-muted-foreground">Зарплата:</span>
-                    <span className="font-bold text-green-600 text-sm">
-                      {formatCurrency(employee.salary)}
-                    </span>
+                    <div className="text-right">
+                      {editingSalaryId === employee.id ? (
+                        <div className="space-y-1">
+                          <Input
+                            type="number"
+                            value={tempSalary}
+                            onChange={(e) => setTempSalary(e.target.value)}
+                            onKeyDown={handleSalaryKeyPress}
+                            className="text-xs h-7 w-20"
+                            autoFocus
+                          />
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              onClick={saveSalaryEdit}
+                              className="h-5 px-2 text-xs bg-green-600 hover:bg-green-700"
+                            >
+                              ✓
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={cancelSalaryEdit}
+                              className="h-5 px-2 text-xs"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <span 
+                            className="font-bold text-green-600 text-sm cursor-pointer hover:text-green-700 transition-colors"
+                            onClick={() => startSalaryEdit(employee.id, employee.salary)}
+                            title="Нажмите для редактирования"
+                          >
+                            {formatCurrency(employee.salary)}
+                          </span>
+                          <div className="text-xs text-muted-foreground">
+                            Нажмите для изменения
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-muted-foreground">Стаж:</span>
@@ -1057,22 +1134,30 @@ const DirectorCabinet = () => {
             Сводка по зарплатам
           </h3>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalSalary)}</div>
-              <div className="text-sm text-muted-foreground">Общий фонд</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="text-lg sm:text-xl font-bold text-green-600 truncate" title={formatCurrency(totalSalary)}>
+                {formatCurrency(totalSalary)}
+              </div>
+              <div className="text-xs text-muted-foreground">Общий фонд</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalTaxes)}</div>
-              <div className="text-sm text-muted-foreground">Налоги (13%)</div>
+            <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="text-lg sm:text-xl font-bold text-red-600 truncate" title={formatCurrency(totalTaxes)}>
+                {formatCurrency(totalTaxes)}
+              </div>
+              <div className="text-xs text-muted-foreground">Налоги (13%)</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{formatCurrency(netSalary)}</div>
-              <div className="text-sm text-muted-foreground">К выплате</div>
+            <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="text-lg sm:text-xl font-bold text-blue-600 truncate" title={formatCurrency(netSalary)}>
+                {formatCurrency(netSalary)}
+              </div>
+              <div className="text-xs text-muted-foreground">К выплате</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{formatCurrency(totalSalary / employees.length)}</div>
-              <div className="text-sm text-muted-foreground">Средняя ЗП</div>
+            <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="text-lg sm:text-xl font-bold text-purple-600 truncate" title={formatCurrency(totalSalary / employees.length)}>
+                {formatCurrency(totalSalary / employees.length)}
+              </div>
+              <div className="text-xs text-muted-foreground">Средняя ЗП</div>
             </div>
           </div>
         </Card>
