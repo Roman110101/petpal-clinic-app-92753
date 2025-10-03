@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
@@ -16,6 +17,7 @@ import {
 import { toast } from "sonner";
 
 const ProfileReal = () => {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -45,7 +47,7 @@ const ProfileReal = () => {
     try {
       await auth.logout();
       toast.success('Вы вышли из системы');
-      window.location.href = '/';
+      navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Ошибка при выходе');
@@ -109,7 +111,7 @@ const ProfileReal = () => {
         <div className="grid gap-4">
           
           {/* Питомцы */}
-          <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer" onClick={() => window.location.href = '/my-pets'}>
+          <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer" onClick={() => navigate('/my-pets')}>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
                 <PawPrint className="w-6 h-6 text-orange-600" />
@@ -123,7 +125,7 @@ const ProfileReal = () => {
           </Card>
 
           {/* Записи */}
-          <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer">
+          <Card className="p-4 active:scale-[0.98] transition-transform cursor-pointer" onClick={() => navigate('/appointment')}>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-purple-600" />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
@@ -16,6 +17,7 @@ interface UserMenuProps {
 }
 
 export const UserMenu: React.FC<UserMenuProps> = ({ onOpenAuth }) => {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,7 +44,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenAuth }) => {
       await supabase.auth.signOut();
       setCurrentUser(null);
       toast.success('Вы вышли из системы');
-      onOpenAuth(); // Переходим на авторизацию
+      navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Ошибка при выходе');
@@ -51,7 +53,12 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenAuth }) => {
 
   const openProfile = () => {
     setIsMenuOpen(false);
-    window.location.href = '/profile';
+    navigate('/profile');
+  };
+
+  const openAppointment = () => {
+    setIsMenuOpen(false);
+    navigate('/appointment');
   };
 
   if (isLoading) {
@@ -144,10 +151,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenAuth }) => {
               </button>
 
               <button
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  window.location.href = '/profile#appointment';
-                }}
+                onClick={openAppointment}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors"
               >
                 <Heart className="w-4 h-4" />
