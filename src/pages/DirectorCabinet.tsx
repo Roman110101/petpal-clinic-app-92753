@@ -66,6 +66,10 @@ const DirectorCabinet = () => {
   const [showEmployees, setShowEmployees] = useState(false);
   const [showStatistics, setShowStatistics] = useState(false);
   const [showCharts, setShowCharts] = useState(false);
+  const [timeFilter, setTimeFilter] = useState('all');
+  const [showBarChart, setShowBarChart] = useState(true);
+  const [showPieChart, setShowPieChart] = useState(true);
+  const [showLineChart, setShowLineChart] = useState(true);
 
   // Демо-данные 50 сотрудников
   const demoEmployees = [
@@ -161,8 +165,28 @@ const DirectorCabinet = () => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
-      currency: 'RUB'
+      currency: 'RUB',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(amount);
+  };
+
+  const formatCompactCurrency = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}М ₽`;
+    } else if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(0)}К ₽`;
+    }
+    return formatCurrency(amount);
+  };
+
+  const formatCompactNumber = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}М`;
+    } else if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(0)}К`;
+    }
+    return amount.toString();
   };
 
   // Калькулятор функции
@@ -509,6 +533,37 @@ const DirectorCabinet = () => {
       value: stats[dept].count,
       color: colors[index % colors.length]
     }));
+  };
+
+  // Фильтрация по времени
+  const getFilteredEmployees = () => {
+    if (timeFilter === 'all') return employees;
+    
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentQuarter = Math.floor(currentMonth / 3);
+    const currentYear = now.getFullYear();
+    
+    // Для демо просто возвращаем всех сотрудников
+    // В реальном приложении здесь была бы фильтрация по датам
+    return employees;
+  };
+
+  const getTimeFilterLabel = () => {
+    const now = new Date();
+    const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+    
+    switch (timeFilter) {
+      case 'current_month':
+        return `Текущий месяц: ${months[now.getMonth()]} ${now.getFullYear()}`;
+      case 'current_quarter':
+        return `Текущий квартал: ${quarters[Math.floor(now.getMonth() / 3)]} ${now.getFullYear()}`;
+      case 'current_year':
+        return `Текущий год: ${now.getFullYear()}`;
+      default:
+        return 'Все время';
+    }
   };
 
   const getDepartmentColor = (department: string) => {
@@ -1168,11 +1223,11 @@ const DirectorCabinet = () => {
                       ) : (
                         <div className="space-y-1">
                           <span 
-                            className="font-bold text-green-600 text-sm cursor-pointer hover:text-green-700 transition-colors"
+                            className="font-bold text-green-600 text-sm cursor-pointer hover:text-green-700 transition-colors break-words"
                             onClick={() => startSalaryEdit(employee.id, employee.salary)}
-                            title="Нажмите для редактирования"
+                            title={`Нажмите для редактирования: ${formatCurrency(employee.salary)}`}
                           >
-                            {formatCurrency(employee.salary)}
+                            {formatCompactCurrency(employee.salary)}
                           </span>
                           <div className="text-xs text-muted-foreground">
                             Нажмите для изменения
@@ -1206,15 +1261,42 @@ const DirectorCabinet = () => {
       {showStatistics && (
         <section className="px-4 mb-6">
           <Card className="p-4 sm:p-6">
-            <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Статистика по отделам
-            </h3>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Статистика по отделам
+              </h3>
+              
+              {/* Time Filter */}
+              <div className="flex gap-2">
+                <select 
+                  value={timeFilter}
+                  onChange={(e) => setTimeFilter(e.target.value)}
+                  className="text-sm p-2 border rounded-lg bg-white dark:bg-gray-800"
+                >
+                  <option value="all">Все время</option>
+                  <option value="current_month">Текущий месяц</option>
+                  <option value="current_quarter">Текущий квартал</option>
+                  <option value="current_year">Текущий год</option>
+                </select>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowStatistics(false)}
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="mb-3 text-sm text-muted-foreground">
+              {getTimeFilterLabel()}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Object.entries(getDepartmentStats()).map(([dept, stats]) => (
-                <div key={dept} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
-                  <h4 className="font-semibold text-sm mb-2">{dept}</h4>
+                <div key={dept} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                  <h4 className="font-semibold text-sm mb-2 truncate">{dept}</h4>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
                       <span>Сотрудников:</span>
@@ -1222,11 +1304,15 @@ const DirectorCabinet = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Общий фонд:</span>
-                      <span className="font-medium">{formatCurrency(stats.totalSalary)}</span>
+                      <span className="font-medium break-words" title={formatCurrency(stats.totalSalary)}>
+                        {formatCompactCurrency(stats.totalSalary)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Средняя ЗП:</span>
-                      <span className="font-medium text-green-600">{formatCurrency(stats.avgSalary)}</span>
+                      <span className="font-medium text-green-600 break-words" title={formatCurrency(stats.avgSalary)}>
+                        {formatCompactCurrency(stats.avgSalary)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1240,67 +1326,157 @@ const DirectorCabinet = () => {
       {showCharts && (
         <section className="px-4 mb-6">
           <Card className="p-4 sm:p-6">
-            <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
-              <PieChart className="w-5 h-5" />
-              Графики и диаграммы
-            </h3>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Bar Chart */}
-              <div>
-                <h4 className="font-medium mb-3 text-center">Сотрудники по отделам</h4>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getChartData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip />
-                      <Bar dataKey="employees" fill="#3B82F6" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                <PieChart className="w-5 h-5" />
+                Графики и диаграммы
+              </h3>
+              
+              <div className="flex gap-2">
+                <select 
+                  value={timeFilter}
+                  onChange={(e) => setTimeFilter(e.target.value)}
+                  className="text-sm p-2 border rounded-lg bg-white dark:bg-gray-800"
+                >
+                  <option value="all">Все время</option>
+                  <option value="current_month">Текущий месяц</option>
+                  <option value="current_quarter">Текущий квартал</option>
+                  <option value="current_year">Текущий год</option>
+                </select>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowCharts(false)}
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </Button>
               </div>
+            </div>
+            
+            <div className="mb-3 text-sm text-muted-foreground">
+              {getTimeFilterLabel()}
+            </div>
+            
+            <div className="space-y-6">
+              {/* Bar Chart */}
+              {showBarChart && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium">Сотрудники по отделам</h4>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowBarChart(false)}
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getChartData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        <Bar dataKey="employees" fill="#3B82F6" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
 
               {/* Pie Chart */}
-              <div>
-                <h4 className="font-medium mb-3 text-center">Распределение по отделам</h4>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={getPieChartData()}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {getPieChartData().map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+              {showPieChart && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium">Распределение по отделам</h4>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowPieChart(false)}
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={getPieChartData()}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {getPieChartData().map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Line Chart */}
-              <div className="lg:col-span-2">
-                <h4 className="font-medium mb-3 text-center">Средняя зарплата по отделам</h4>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={getChartData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                      <Line type="monotone" dataKey="avgSalary" stroke="#10B981" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
+              {showLineChart && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium">Средняя зарплата по отделам</h4>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowLineChart(false)}
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={getChartData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip formatter={(value) => formatCompactCurrency(Number(value))} />
+                        <Line type="monotone" dataKey="avgSalary" stroke="#10B981" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
+              )}
+
+              {/* Chart Controls */}
+              <div className="flex flex-wrap gap-2 justify-center">
+                {!showBarChart && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setShowBarChart(true)}
+                  >
+                    Показать Bar Chart
+                  </Button>
+                )}
+                {!showPieChart && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setShowPieChart(true)}
+                  >
+                    Показать Pie Chart
+                  </Button>
+                )}
+                {!showLineChart && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setShowLineChart(true)}
+                  >
+                    Показать Line Chart
+                  </Button>
+                )}
               </div>
             </div>
           </Card>
@@ -1317,26 +1493,26 @@ const DirectorCabinet = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-lg sm:text-xl font-bold text-green-600 truncate" title={formatCurrency(totalSalary)}>
-                {formatCurrency(totalSalary)}
+              <div className="text-sm sm:text-base lg:text-lg font-bold text-green-600 break-words" title={formatCurrency(totalSalary)}>
+                {formatCompactCurrency(totalSalary)}
               </div>
               <div className="text-xs text-muted-foreground">Общий фонд</div>
             </div>
             <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-lg sm:text-xl font-bold text-red-600 truncate" title={formatCurrency(totalTaxes)}>
-                {formatCurrency(totalTaxes)}
+              <div className="text-sm sm:text-base lg:text-lg font-bold text-red-600 break-words" title={formatCurrency(totalTaxes)}>
+                {formatCompactCurrency(totalTaxes)}
               </div>
               <div className="text-xs text-muted-foreground">Налоги (13%)</div>
             </div>
             <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-lg sm:text-xl font-bold text-blue-600 truncate" title={formatCurrency(netSalary)}>
-                {formatCurrency(netSalary)}
+              <div className="text-sm sm:text-base lg:text-lg font-bold text-blue-600 break-words" title={formatCurrency(netSalary)}>
+                {formatCompactCurrency(netSalary)}
               </div>
               <div className="text-xs text-muted-foreground">К выплате</div>
             </div>
             <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-lg sm:text-xl font-bold text-purple-600 truncate" title={formatCurrency(totalSalary / employees.length)}>
-                {formatCurrency(totalSalary / employees.length)}
+              <div className="text-sm sm:text-base lg:text-lg font-bold text-purple-600 break-words" title={formatCurrency(totalSalary / employees.length)}>
+                {formatCompactCurrency(totalSalary / employees.length)}
               </div>
               <div className="text-xs text-muted-foreground">Средняя ЗП</div>
             </div>
