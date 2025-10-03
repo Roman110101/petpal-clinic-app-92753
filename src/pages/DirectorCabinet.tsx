@@ -200,7 +200,16 @@ const DirectorCabinet = () => {
     } else if (amount >= 1000) {
       return `${(amount / 1000).toFixed(0)}К`;
     }
-    return `${Math.round(amount / 1000)}К`;
+    return `${amount}`;
+  };
+
+  const formatSuperCompact = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}М`;
+    } else if (amount >= 1000) {
+      return `${Math.round(amount / 1000)}К`;
+    }
+    return `${Math.round(amount / 100)}К`;
   };
 
   const formatCompactNumber = (amount: number) => {
@@ -1486,6 +1495,14 @@ const DirectorCabinet = () => {
                   <div className="h-48 sm:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
+                        <defs>
+                          {getPieChartDataExcel().map((entry, index) => (
+                            <radialGradient key={`gradient-${index}`} id={`gradient-${index}`} cx="50%" cy="50%" r="50%">
+                              <stop offset="0%" stopColor={entry.color} stopOpacity={1} />
+                              <stop offset="100%" stopColor={entry.color} stopOpacity={0.8} />
+                            </radialGradient>
+                          ))}
+                        </defs>
                         <Pie
                           data={getPieChartDataExcel()}
                           cx="50%"
@@ -1503,7 +1520,7 @@ const DirectorCabinet = () => {
                           {getPieChartDataExcel().map((entry, index) => (
                             <Cell 
                               key={`cell-${index}`} 
-                              fill={entry.color}
+                              fill={`url(#gradient-${index})`}
                               stroke="#ffffff"
                               strokeWidth={3}
                             />
@@ -1623,28 +1640,28 @@ const DirectorCabinet = () => {
             <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-green-600" title={formatCurrency(totalSalary)}>
                 <div className="hidden sm:block">{formatCompactCurrency(totalSalary)}</div>
-                <div className="sm:hidden">{formatUltraCompact(totalSalary)}</div>
+                <div className="sm:hidden">{formatSuperCompact(totalSalary)}</div>
               </div>
               <div className="text-xs text-muted-foreground">Фонд</div>
             </div>
             <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-red-600" title={formatCurrency(totalTaxes)}>
                 <div className="hidden sm:block">{formatCompactCurrency(totalTaxes)}</div>
-                <div className="sm:hidden">{formatUltraCompact(totalTaxes)}</div>
+                <div className="sm:hidden">{formatSuperCompact(totalTaxes)}</div>
               </div>
               <div className="text-xs text-muted-foreground">Налоги</div>
             </div>
             <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-blue-600" title={formatCurrency(netSalary)}>
                 <div className="hidden sm:block">{formatCompactCurrency(netSalary)}</div>
-                <div className="sm:hidden">{formatUltraCompact(netSalary)}</div>
+                <div className="sm:hidden">{formatSuperCompact(netSalary)}</div>
               </div>
               <div className="text-xs text-muted-foreground">Выплата</div>
             </div>
             <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-purple-600" title={formatCurrency(totalSalary / employees.length)}>
                 <div className="hidden sm:block">{formatCompactCurrency(totalSalary / employees.length)}</div>
-                <div className="sm:hidden">{formatUltraCompact(totalSalary / employees.length)}</div>
+                <div className="sm:hidden">{formatSuperCompact(totalSalary / employees.length)}</div>
               </div>
               <div className="text-xs text-muted-foreground">Средняя</div>
             </div>
@@ -1675,7 +1692,7 @@ const DirectorCabinet = () => {
               >
                 <div className="text-xs font-bold">{monthData.month}</div>
                 <div className="text-xs text-green-600 font-medium" title={formatCurrency(monthData.netSalary)}>
-                  {formatUltraCompact(monthData.netSalary)}
+                  {formatSuperCompact(monthData.netSalary)}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {monthData.isCurrent ? 'Тек.' : monthData.isNext ? 'След.' : '→'}
@@ -1684,7 +1701,7 @@ const DirectorCabinet = () => {
             ))}
           </div>
           
-          {/* Месячные графики - внутри секции */}
+          {/* Месячные графики - снизу */}
           {showMonthlyCharts && selectedMonth !== null && (
             <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg border">
               <div className="flex items-center justify-between mb-3">
@@ -1717,6 +1734,40 @@ const DirectorCabinet = () => {
           )}
         </Card>
       </section>
+
+      {/* Monthly Charts - Bottom Section */}
+      {showMonthlyCharts && selectedMonth !== null && (
+        <section className="px-4 mb-6">
+          <Card className="p-4 bg-white dark:bg-gray-800 rounded-lg border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Анализ за {getMonthlySalaryData()[selectedMonth].month} месяц
+              </h3>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowMonthlyCharts(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={getMonthlyChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [formatCompactCurrency(Number(value)), '']} />
+                  <Bar dataKey="netSalary" fill="#22c55e" name="К выплате" />
+                  <Bar dataKey="taxes" fill="#ef4444" name="Налоги" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </section>
+      )}
 
       {/* Bottom Spacing */}
       <div className="h-20"></div>
