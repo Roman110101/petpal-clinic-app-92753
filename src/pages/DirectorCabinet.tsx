@@ -194,6 +194,15 @@ const DirectorCabinet = () => {
     return `${amount}`;
   };
 
+  const formatUltraCompact = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}М`;
+    } else if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(0)}К`;
+    }
+    return `${Math.round(amount / 1000)}К`;
+  };
+
   const formatCompactNumber = (amount: number) => {
     if (amount >= 1000000) {
       return `${(amount / 1000000).toFixed(1)}М`;
@@ -607,8 +616,8 @@ const DirectorCabinet = () => {
     const stats = getDepartmentStats();
     // Яркие цвета как в Excel - убедимся что все цвета используются
     const excelColors = [
-      '#4F81BD', '#F79646', '#9BBB59', '#8064A2', '#4BACC6', '#F24E1E',
-      '#FF6B35', '#F7931E', '#FFD23F', '#06FFA5', '#118AB2', '#073B4C'
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3',
+      '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43', '#10AC84', '#EE5A24'
     ];
     
     const data = Object.keys(stats).map((dept, index) => ({
@@ -1483,17 +1492,21 @@ const DirectorCabinet = () => {
                           cy="50%"
                           innerRadius={30}
                           outerRadius={80}
-                          paddingAngle={2}
+                          paddingAngle={3}
                           dataKey="value"
                           animationBegin={0}
                           animationDuration={1500}
                           animationEasing="ease-out"
-                          stroke="#fff"
-                          strokeWidth={2}
-                          fill="#8884d8"
+                          stroke="#ffffff"
+                          strokeWidth={3}
                         >
                           {getPieChartDataExcel().map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} stroke={entry.color} strokeWidth={1} />
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={entry.color}
+                              stroke="#ffffff"
+                              strokeWidth={3}
+                            />
                           ))}
                         </Pie>
                         <Tooltip 
@@ -1606,34 +1619,34 @@ const DirectorCabinet = () => {
             Сводка по зарплатам
           </h3>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            <div className="text-center p-2 bg-white dark:bg-gray-800 rounded border">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1">
+            <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-green-600" title={formatCurrency(totalSalary)}>
                 <div className="hidden sm:block">{formatCompactCurrency(totalSalary)}</div>
-                <div className="sm:hidden">{formatCompactCurrencyMobile(totalSalary)}</div>
+                <div className="sm:hidden">{formatUltraCompact(totalSalary)}</div>
               </div>
-              <div className="text-xs text-muted-foreground">Общий фонд</div>
+              <div className="text-xs text-muted-foreground">Фонд</div>
             </div>
-            <div className="text-center p-2 bg-white dark:bg-gray-800 rounded border">
+            <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-red-600" title={formatCurrency(totalTaxes)}>
                 <div className="hidden sm:block">{formatCompactCurrency(totalTaxes)}</div>
-                <div className="sm:hidden">{formatCompactCurrencyMobile(totalTaxes)}</div>
+                <div className="sm:hidden">{formatUltraCompact(totalTaxes)}</div>
               </div>
-              <div className="text-xs text-muted-foreground">Налоги (13%)</div>
+              <div className="text-xs text-muted-foreground">Налоги</div>
             </div>
-            <div className="text-center p-2 bg-white dark:bg-gray-800 rounded border">
+            <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-blue-600" title={formatCurrency(netSalary)}>
                 <div className="hidden sm:block">{formatCompactCurrency(netSalary)}</div>
-                <div className="sm:hidden">{formatCompactCurrencyMobile(netSalary)}</div>
+                <div className="sm:hidden">{formatUltraCompact(netSalary)}</div>
               </div>
-              <div className="text-xs text-muted-foreground">К выплате</div>
+              <div className="text-xs text-muted-foreground">Выплата</div>
             </div>
-            <div className="text-center p-2 bg-white dark:bg-gray-800 rounded border">
+            <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-purple-600" title={formatCurrency(totalSalary / employees.length)}>
                 <div className="hidden sm:block">{formatCompactCurrency(totalSalary / employees.length)}</div>
-                <div className="sm:hidden">{formatCompactCurrencyMobile(totalSalary / employees.length)}</div>
+                <div className="sm:hidden">{formatUltraCompact(totalSalary / employees.length)}</div>
               </div>
-              <div className="text-xs text-muted-foreground">Средняя ЗП</div>
+              <div className="text-xs text-muted-foreground">Средняя</div>
             </div>
           </div>
         </Card>
@@ -1647,11 +1660,11 @@ const DirectorCabinet = () => {
             Анализ зарплат по месяцам
           </h3>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-1">
             {getMonthlySalaryData().map((monthData, index) => (
               <div 
                 key={index} 
-                className={`text-center p-2 rounded border cursor-pointer hover:shadow-md transition-all ${
+                className={`text-center p-1 rounded border cursor-pointer hover:shadow-md transition-all ${
                   monthData.isCurrent 
                     ? 'bg-green-100 border-green-300 dark:bg-green-900 dark:border-green-700' 
                     : monthData.isNext
@@ -1660,39 +1673,40 @@ const DirectorCabinet = () => {
                 } ${selectedMonth === index ? 'ring-2 ring-blue-500' : ''}`}
                 onClick={() => handleMonthClick(index)}
               >
-                <div className="text-xs font-bold mb-1">{monthData.month}</div>
+                <div className="text-xs font-bold">{monthData.month}</div>
                 <div className="text-xs text-green-600 font-medium" title={formatCurrency(monthData.netSalary)}>
-                  {formatCompactCurrencyMobile(monthData.netSalary)}
+                  {formatUltraCompact(monthData.netSalary)}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {monthData.isCurrent ? 'Текущий' : monthData.isNext ? 'Следующий' : 'Нажмите'}
+                  {monthData.isCurrent ? 'Тек.' : monthData.isNext ? 'След.' : '→'}
                 </div>
               </div>
             ))}
           </div>
           
-          {/* Месячные графики */}
+          {/* Месячные графики - внутри секции */}
           {showMonthlyCharts && selectedMonth !== null && (
-            <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-lg">
-                  Анализ за {getMonthlySalaryData()[selectedMonth].month} месяц
+            <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-sm">
+                  {getMonthlySalaryData()[selectedMonth].month} месяц
                 </h4>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => setShowMonthlyCharts(false)}
+                  className="h-6 w-6 p-0"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3 h-3" />
                 </Button>
               </div>
               
-              <div className="h-64">
+              <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={getMonthlyChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart data={getMonthlyChartData()} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
+                    <XAxis dataKey="month" fontSize={10} />
+                    <YAxis fontSize={10} />
                     <Tooltip formatter={(value) => [formatCompactCurrency(Number(value)), '']} />
                     <Bar dataKey="netSalary" fill="#22c55e" name="К выплате" />
                     <Bar dataKey="taxes" fill="#ef4444" name="Налоги" />
