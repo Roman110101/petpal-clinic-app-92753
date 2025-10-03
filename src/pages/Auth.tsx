@@ -1,9 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
+import { auth as authService, checkServerHealth, RegisterData, LoginData } from "@/services/unifiedAuthService";
 import { 
   User, 
   Mail, 
@@ -12,35 +13,217 @@ import {
   Eye, 
   EyeOff,
   ArrowLeft,
-  PawPrint
+  PawPrint,
+  Loader2,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
+import { toast } from "sonner";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [serverStatus, setServerStatus] = useState<'unknown' | 'online' | 'offline'>('unknown');
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     password: "",
     confirmPassword: ""
   });
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Здесь будет логика авторизации/регистрации
-    console.log("Form submitted:", formData);
-    // Перенаправляем в личный кабинет после "входа"
-    navigate('/profile');
+  // Проверяем статус сервера при загрузке компонента
+  const checkServerStatus = async () => {
+    try {
+      const isOnline = await checkServerHealth();
+      setServerStatus(isOnline ? 'online' : 'offline');
+    } catch (error) {
+      setServerStatus('offline');
+    }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // Вызываем проверку при первой загрузке
+  React.useEffect(() => {
+    checkServerStatus();
+  }, []);
+
+  const validateForm = (): boolean => {
+    const newErrors: {[key: string]: string} = {};
+
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = 'Email обязателен';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Некорректный email адрес';
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Пароль обязателен';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Пароль должен содержать минимум 6 символов';
+    }
+
+    // Registration specific validations
+    if (!isLogin) {
+      // Password confirmation
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = 'Подтвердите пароль';
+      } else if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Пароли не совпадают';
+      }
+
+      // Name validation
+      if (!formData.firstName?.trim()) {
+        newErrors.firstName = 'Имя обязательно';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        // Вход
+        const loginData: LoginData = {
+          email: formData.email,
+          password: formData.password
+        };
+
+        const result = await authService.login(loginData);
+        
+        console.log('Login result:', result); // Для диагностики
+        
+        if (result.success) {
+          toast.success('Успешный вход в систему!');
+          navigate('/profile');
+        } else {
+          console.error('Login failed:', result);
+          toast.error(result.message || 'Ошибка при входе');
+          if (result.message?.includes('email')) {
+            toast.info('💡 Возможно нужно подтвердить email перед входом');
+          }
+        }
+      } else {
+        // Регистрация
+        const registerData: RegisterData = {
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone
+        };
+
+        const result = await authService.register(registerData);
+        
+        console.log('Registration result:', result); // Для диагностики
+        
+        if (result.success) {
+          toast.success('🎉 Регистрация прошла успешно!');
+          
+          // Показываем кнопку для перехода на почту
+          toast.custom((t) => (
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border max-w-sm">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                    Подтвердите email!
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                    Мы отправили письмо на <strong>{formData.email}</strong>
+                  </p>
+                  <button
+                    onClick={() => {
+                      // Определяем домен почты и открываем
+                      const emailDomain = formData.email.split('@')[1];
+                      const emailUrls = {
+                        'gmail.com': 'https://gmail.com',
+                        'yandex.ru': 'https://mail.yandex.ru',
+                        'mail.ru': 'https://mail.ru',
+                        'yahoo.com': 'https://mail.yahoo.com',
+                        'outlook.com': 'https://outlook.com',
+                        'hotmail.com': 'https://hotmail.com'
+                      };
+                      
+                      const url = emailUrls[emailDomain as keyof typeof emailUrls];
+                      if (url) {
+                        window.open(url, '_blank');
+                        toast.dismiss(t);
+                        toast.success('✅ Почта открыта! Проверьте письмо');
+                      } else {
+                        toast.info('Откройте свой почтовый ящик вручную');
+                      }
+                    }}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors"
+                  >
+                    📧 Открыть почту
+                  </button>
+                  <button
+                    onClick={() => toast.dismiss(t)}
+                    className="w-full mt-2 text-gray-500 hover:text-gray-700 text-sm py-1 transition-colors"
+                  >
+                    Закрыть
+                  </button>
+                </div>
+              </div>
+            </div>
+          ), { duration: 10000 });
+          
+          setIsLogin(true); // Переключаемся на форму входа
+          setFormData({
+            firstName: "",
+            lastName: "",
+            email: formData.email, // Сохраняем email для удобства
+            phone: "",
+            password: "",
+            confirmPassword: ""
+          });
+        } else {
+          console.error('Registration failed:', result);
+          toast.error(result.message || 'Ошибка при регистрации');
+        }
+      }
+    } catch (error: any) {
+      console.error('Auth error:', error);
+      toast.error('Произошла ошибка при авторизации');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+    const handleInputChange = (field: string, value: string) => {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+      
+      // Очищаем ошибку для этого поля при изменении
+      if (errors[field]) {
+        setErrors(prev => ({
+          ...prev,
+          [field]: ''
+        }));
+      }
+    };
 
   return (
     <div className="bg-background min-h-screen pt-16 ios-scroll-fix">
@@ -83,26 +266,71 @@ const Auth = () => {
             </h2>
           </div>
 
+          {/* Server Status Indicator */}
+          <div className="mb-4 p-3 rounded-lg text-sm flex items-center gap-2">
+            {serverStatus === 'online' ? (
+              <>
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span className="text-green-700">Сервер онлайн - авторизация доступна</span>
+              </>
+            ) : serverStatus === 'offline' ? (
+              <>
+                <AlertCircle className="w-4 h-4 text-red-500" />
+                <span className="text-red-700">Сервер недоступен - демо режим</span>
+              </>
+            ) : (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                <span className="text-blue-700">Проверяем подключение...</span>
+              </>
+            )}
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name field (only for registration) */}
+            {/* Name fields (only for registration) */}
             {!isLogin && (
-              <div>
-                <Label htmlFor="name" className="text-foreground text-sm mb-2 block">
-                  Ваше имя
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Введите ваше имя"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="pl-10 h-12"
-                    required={!isLogin}
-                  />
+              <>
+                <div>
+                  <Label htmlFor="firstName" className="text-foreground text-sm mb-2 block">
+                    Имя
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="firstName"
+                      type="text"
+                      placeholder="Введите ваше имя"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                      className={`pl-10 h-12 ${errors.firstName ? 'border-red-500 focus:border-red-500' : ''}`}
+                      required={!isLogin}
+                    />
+                  </div>
+                  {errors.firstName && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.firstName}
+                    </p>
+                  )}
                 </div>
-              </div>
+
+                <div>
+                  <Label htmlFor="lastName" className="text-foreground text-sm mb-2 block">
+                    Фамилия (необязательно)
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="Введите вашу фамилию"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                      className="pl-10 h-12"
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Email field */}
@@ -118,10 +346,16 @@ const Auth = () => {
                   placeholder="example@mail.com"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="pl-10 h-12"
+                  className={`pl-10 h-12 ${errors.email ? 'border-red-500 focus:border-red-500' : ''}`}
                   required
                 />
               </div>
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.email}
+                </p>
+              )}
             </div>
 
             {/* Phone field (only for registration) */}
@@ -158,7 +392,7 @@ const Auth = () => {
                   placeholder="Введите пароль"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="pl-10 pr-10 h-12"
+                  className={`pl-10 pr-10 h-12 ${errors.password ? 'border-red-500 focus:border-red-500' : ''}`}
                   required
                 />
                 <button
@@ -169,6 +403,17 @@ const Auth = () => {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.password}
+                </p>
+              )}
+              {!isLogin && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  После регистрации проверьте email для подтверждения
+                </p>
+              )}
             </div>
 
             {/* Confirm Password field (only for registration) */}
@@ -185,19 +430,33 @@ const Auth = () => {
                     placeholder="Повторите пароль"
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                    className="pl-10 h-12"
+                    className={`pl-10 h-12 ${errors.confirmPassword ? 'border-red-500 focus:border-red-500' : ''}`}
                     required={!isLogin}
                   />
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.confirmPassword}
+                  </p>
+                )}
               </div>
             )}
 
             {/* Submit Button */}
             <Button 
               type="submit" 
+              disabled={isLoading || serverStatus === 'offline'}
               className="w-full h-12 text-base font-medium mt-6"
             >
-              {isLogin ? 'Войти' : 'Зарегистрироваться'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  {isLogin ? 'Вход...' : 'Регистрация...'}
+                </>
+              ) : (
+                isLogin ? 'Войти' : 'Зарегистрироваться'
+              )}
             </Button>
           </form>
 

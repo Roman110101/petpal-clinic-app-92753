@@ -3,6 +3,7 @@ import { Menu, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
+import { UserMenu } from './UserMenu';
 
 interface MenuRef {
   openMenu: () => void;
@@ -67,14 +68,8 @@ export const Header = () => {
 
           {/* Иконки справа */}
           <div className="flex items-center gap-2">
-            {/* Иконка входа в личный кабинет */}
-            <button
-              onClick={() => navigate('/auth')}
-              className="w-10 h-10 flex items-center justify-center bg-primary/20 dark:bg-primary/30 rounded-lg shadow-sm hover:bg-primary/30 dark:hover:bg-primary/40 transition-colors"
-              aria-label="Вход в личный кабинет"
-            >
-              <User className="w-5 h-5 text-primary dark:text-primary" />
-            </button>
+            {/* Меню пользователя - показывает авторизованного пользователя или кнопку входа */}
+            <UserMenu onOpenAuth={() => navigate('/auth')} />
 
             {/* Иконка меню */}
             <button
