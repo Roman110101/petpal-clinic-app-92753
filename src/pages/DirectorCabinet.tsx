@@ -32,7 +32,8 @@ import {
   Star,
   Edit,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Calendar
 } from "lucide-react";
 
 const DirectorCabinet = () => {
@@ -70,6 +71,7 @@ const DirectorCabinet = () => {
   const [showBarChart, setShowBarChart] = useState(true);
   const [showPieChart, setShowPieChart] = useState(true);
   const [showLineChart, setShowLineChart] = useState(true);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
 
   // Демо-данные 50 сотрудников
   const demoEmployees = [
@@ -573,6 +575,44 @@ const DirectorCabinet = () => {
       default:
         return 'Все время';
     }
+  };
+
+  // Месячные расчеты
+  const getMonthlySalaryData = () => {
+    const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+    const currentMonthIndex = new Date().getMonth();
+    
+    return months.map((month, index) => {
+      // Для демо добавляем небольшие вариации в зарплатах по месяцам
+      const variation = Math.floor(Math.random() * 50000) - 25000; // ±25k вариация
+      const monthlyTotal = totalSalary + variation;
+      const monthlyNet = monthlyTotal * 0.87;
+      const monthlyTaxes = monthlyTotal * 0.13;
+      
+      return {
+        month,
+        totalSalary: monthlyTotal,
+        netSalary: monthlyNet,
+        taxes: monthlyTaxes,
+        isCurrent: index === currentMonthIndex,
+        isNext: index === currentMonthIndex + 1
+      };
+    });
+  };
+
+  const getPieChartDataExcel = () => {
+    const stats = getDepartmentStats();
+    // Яркие цвета как в Excel
+    const excelColors = [
+      '#4F81BD', '#F79646', '#9BBB59', '#8064A2', '#4BACC6', '#F24E1E',
+      '#FF6B35', '#F7931E', '#FFD23F', '#06FFA5', '#118AB2', '#073B4C'
+    ];
+    
+    return Object.keys(stats).map((dept, index) => ({
+      name: dept,
+      value: stats[dept].count,
+      color: excelColors[index % excelColors.length]
+    }));
   };
 
   const getDepartmentColor = (department: string) => {
@@ -1413,21 +1453,13 @@ const DirectorCabinet = () => {
                   <div className="h-48 sm:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <defs>
-                          {getPieChartData().map((entry, index) => (
-                            <linearGradient key={`gradient-${index}`} id={`gradient-${index}`}>
-                              <stop offset="0%" stopColor={entry.color} stopOpacity={0.8} />
-                              <stop offset="100%" stopColor={entry.color} stopOpacity={1} />
-                            </linearGradient>
-                          ))}
-                        </defs>
                         <Pie
-                          data={getPieChartData()}
+                          data={getPieChartDataExcel()}
                           cx="50%"
                           cy="50%"
-                          innerRadius={35}
-                          outerRadius={75}
-                          paddingAngle={3}
+                          innerRadius={30}
+                          outerRadius={80}
+                          paddingAngle={2}
                           dataKey="value"
                           animationBegin={0}
                           animationDuration={1500}
@@ -1435,8 +1467,8 @@ const DirectorCabinet = () => {
                           stroke="#fff"
                           strokeWidth={2}
                         >
-                          {getPieChartData().map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={`url(#gradient-${index})`} />
+                          {getPieChartDataExcel().map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
                         <Tooltip 
@@ -1456,7 +1488,7 @@ const DirectorCabinet = () => {
                   </div>
                   {/* Legend */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-3">
-                    {getPieChartData().map((entry, index) => (
+                    {getPieChartDataExcel().map((entry, index) => (
                       <div key={index} className="flex items-center gap-2 text-xs p-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                         <div 
                           className="w-3 h-3 rounded-full shadow-sm" 
@@ -1549,35 +1581,68 @@ const DirectorCabinet = () => {
             Сводка по зарплатам
           </h3>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-            <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="text-center p-2 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-green-600" title={formatCurrency(totalSalary)}>
                 <div className="hidden sm:block">{formatCompactCurrency(totalSalary)}</div>
                 <div className="sm:hidden">{formatCompactCurrencyMobile(totalSalary)}</div>
               </div>
               <div className="text-xs text-muted-foreground">Общий фонд</div>
             </div>
-            <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
+            <div className="text-center p-2 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-red-600" title={formatCurrency(totalTaxes)}>
                 <div className="hidden sm:block">{formatCompactCurrency(totalTaxes)}</div>
                 <div className="sm:hidden">{formatCompactCurrencyMobile(totalTaxes)}</div>
               </div>
               <div className="text-xs text-muted-foreground">Налоги (13%)</div>
             </div>
-            <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
+            <div className="text-center p-2 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-blue-600" title={formatCurrency(netSalary)}>
                 <div className="hidden sm:block">{formatCompactCurrency(netSalary)}</div>
                 <div className="sm:hidden">{formatCompactCurrencyMobile(netSalary)}</div>
               </div>
               <div className="text-xs text-muted-foreground">К выплате</div>
             </div>
-            <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
+            <div className="text-center p-2 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-purple-600" title={formatCurrency(totalSalary / employees.length)}>
                 <div className="hidden sm:block">{formatCompactCurrency(totalSalary / employees.length)}</div>
                 <div className="sm:hidden">{formatCompactCurrencyMobile(totalSalary / employees.length)}</div>
               </div>
               <div className="text-xs text-muted-foreground">Средняя ЗП</div>
             </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* Monthly Salary Analysis */}
+      <section className="px-4 mb-6">
+        <Card className="p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-blue-200 dark:border-blue-800">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Анализ зарплат по месяцам
+          </h3>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {getMonthlySalaryData().map((monthData, index) => (
+              <div 
+                key={index} 
+                className={`text-center p-2 rounded border ${
+                  monthData.isCurrent 
+                    ? 'bg-green-100 border-green-300 dark:bg-green-900 dark:border-green-700' 
+                    : monthData.isNext
+                    ? 'bg-blue-100 border-blue-300 dark:bg-blue-900 dark:border-blue-700'
+                    : 'bg-white dark:bg-gray-800'
+                }`}
+              >
+                <div className="text-xs font-bold mb-1">{monthData.month}</div>
+                <div className="text-xs text-green-600 font-medium" title={formatCurrency(monthData.netSalary)}>
+                  {formatCompactCurrencyMobile(monthData.netSalary)}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {monthData.isCurrent ? 'Текущий' : monthData.isNext ? 'Следующий' : ''}
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
       </section>
