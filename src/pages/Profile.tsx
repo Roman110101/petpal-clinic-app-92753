@@ -26,6 +26,28 @@ const ProfileReal = () => {
 
   useEffect(() => {
     loadUserData();
+    
+    // Обработчик для предотвращения ошибок при обновлении страницы
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Предотвращаем показ диалога подтверждения
+      e.preventDefault();
+    };
+
+    // Обработчик для mobile refresh
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Страница снова стала видимой, перезагружаем данные
+        loadUserData();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const loadUserData = async () => {
@@ -33,7 +55,14 @@ const ProfileReal = () => {
       setIsLoading(true);
       
       // Получаем текущего пользователя через Supabase
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('Auth error:', error);
+        // Если ошибка авторизации, перенаправляем на логин
+        navigate('/auth');
+        return;
+      }
       
       if (user) {
         setCurrentUser(user);
@@ -42,10 +71,18 @@ const ProfileReal = () => {
         navigate('/auth');
         return;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading user:', error);
-      toast.error('Ошибка загрузки данных пользователя');
-      navigate('/auth');
+      
+      // Проверяем тип ошибки
+      if (error?.code === 'PGRST301' || error?.message?.includes('JWT')) {
+        // Ошибка токена - перенаправляем на авторизацию
+        navigate('/auth');
+      } else {
+        // Другие ошибки - показываем сообщение
+        toast.error('Ошибка загрузки данных пользователя');
+        // Не перенаправляем сразу, даем пользователю возможность повторить
+      }
     } finally {
       setIsLoading(false);
     }
