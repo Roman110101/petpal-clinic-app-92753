@@ -1636,32 +1636,28 @@ const DirectorCabinet = () => {
             Сводка по зарплатам
           </h3>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1">
+          <div className="grid grid-cols-4 gap-1">
             <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-green-600" title={formatCurrency(totalSalary)}>
-                <div className="hidden sm:block">{formatCompactCurrency(totalSalary)}</div>
-                <div className="sm:hidden">{formatSuperCompact(totalSalary)}</div>
+                {formatSuperCompact(totalSalary)}
               </div>
               <div className="text-xs text-muted-foreground">Фонд</div>
             </div>
             <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-red-600" title={formatCurrency(totalTaxes)}>
-                <div className="hidden sm:block">{formatCompactCurrency(totalTaxes)}</div>
-                <div className="sm:hidden">{formatSuperCompact(totalTaxes)}</div>
+                {formatSuperCompact(totalTaxes)}
               </div>
               <div className="text-xs text-muted-foreground">Налоги</div>
             </div>
             <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-blue-600" title={formatCurrency(netSalary)}>
-                <div className="hidden sm:block">{formatCompactCurrency(netSalary)}</div>
-                <div className="sm:hidden">{formatSuperCompact(netSalary)}</div>
+                {formatSuperCompact(netSalary)}
               </div>
               <div className="text-xs text-muted-foreground">Выплата</div>
             </div>
             <div className="text-center p-1 bg-white dark:bg-gray-800 rounded border">
               <div className="text-xs font-bold text-purple-600" title={formatCurrency(totalSalary / employees.length)}>
-                <div className="hidden sm:block">{formatCompactCurrency(totalSalary / employees.length)}</div>
-                <div className="sm:hidden">{formatSuperCompact(totalSalary / employees.length)}</div>
+                {formatSuperCompact(totalSalary / employees.length)}
               </div>
               <div className="text-xs text-muted-foreground">Средняя</div>
             </div>
@@ -1701,7 +1697,7 @@ const DirectorCabinet = () => {
             ))}
           </div>
           
-          {/* Месячные графики - снизу */}
+          {/* Месячные графики - внутри календаря */}
           {showMonthlyCharts && selectedMonth !== null && (
             <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg border">
               <div className="flex items-center justify-between mb-3">
@@ -1735,39 +1731,6 @@ const DirectorCabinet = () => {
         </Card>
       </section>
 
-      {/* Monthly Charts - Bottom Section */}
-      {showMonthlyCharts && selectedMonth !== null && (
-        <section className="px-4 mb-6">
-          <Card className="p-4 bg-white dark:bg-gray-800 rounded-lg border">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Анализ за {getMonthlySalaryData()[selectedMonth].month} месяц
-              </h3>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowMonthlyCharts(false)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={getMonthlyChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [formatCompactCurrency(Number(value)), '']} />
-                  <Bar dataKey="netSalary" fill="#22c55e" name="К выплате" />
-                  <Bar dataKey="taxes" fill="#ef4444" name="Налоги" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </section>
-      )}
 
       {/* Bottom Spacing */}
       <div className="h-20"></div>
