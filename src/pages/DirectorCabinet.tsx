@@ -177,7 +177,16 @@ const DirectorCabinet = () => {
     } else if (amount >= 1000) {
       return `${(amount / 1000).toFixed(0)}К ₽`;
     }
-    return formatCurrency(amount);
+    return `${amount.toLocaleString('ru-RU')} ₽`;
+  };
+
+  const formatCompactCurrencyMobile = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}М`;
+    } else if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(0)}К`;
+    }
+    return `${amount}`;
   };
 
   const formatCompactNumber = (amount: number) => {
@@ -1223,11 +1232,12 @@ const DirectorCabinet = () => {
                       ) : (
                         <div className="space-y-1">
                           <span 
-                            className="font-bold text-green-600 text-xs sm:text-sm cursor-pointer hover:text-green-700 transition-colors break-words"
+                            className="font-bold text-green-600 text-xs sm:text-sm cursor-pointer hover:text-green-700 transition-colors"
                             onClick={() => startSalaryEdit(employee.id, employee.salary)}
                             title={`Нажмите для редактирования: ${formatCurrency(employee.salary)}`}
                           >
-                            {formatCompactCurrency(employee.salary)}
+                            <div className="hidden sm:block">{formatCompactCurrency(employee.salary)}</div>
+                            <div className="sm:hidden">{formatCompactCurrencyMobile(employee.salary)}</div>
                           </span>
                           <div className="text-xs text-muted-foreground">
                             Нажмите для изменения
@@ -1304,14 +1314,16 @@ const DirectorCabinet = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Общий фонд:</span>
-                      <span className="font-medium break-words" title={formatCurrency(stats.totalSalary)}>
-                        {formatCompactCurrency(stats.totalSalary)}
+                      <span className="font-medium" title={formatCurrency(stats.totalSalary)}>
+                        <div className="hidden sm:block">{formatCompactCurrency(stats.totalSalary)}</div>
+                        <div className="sm:hidden">{formatCompactCurrencyMobile(stats.totalSalary)}</div>
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Средняя ЗП:</span>
-                      <span className="font-medium text-green-600 break-words" title={formatCurrency(stats.avgSalary)}>
-                        {formatCompactCurrency(stats.avgSalary)}
+                      <span className="font-medium text-green-600" title={formatCurrency(stats.avgSalary)}>
+                        <div className="hidden sm:block">{formatCompactCurrency(stats.avgSalary)}</div>
+                        <div className="sm:hidden">{formatCompactCurrencyMobile(stats.avgSalary)}</div>
                       </span>
                     </div>
                   </div>
@@ -1401,20 +1413,30 @@ const DirectorCabinet = () => {
                   <div className="h-48 sm:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
+                        <defs>
+                          {getPieChartData().map((entry, index) => (
+                            <linearGradient key={`gradient-${index}`} id={`gradient-${index}`}>
+                              <stop offset="0%" stopColor={entry.color} stopOpacity={0.8} />
+                              <stop offset="100%" stopColor={entry.color} stopOpacity={1} />
+                            </linearGradient>
+                          ))}
+                        </defs>
                         <Pie
                           data={getPieChartData()}
                           cx="50%"
                           cy="50%"
-                          innerRadius={30}
-                          outerRadius={70}
-                          paddingAngle={2}
+                          innerRadius={35}
+                          outerRadius={75}
+                          paddingAngle={3}
                           dataKey="value"
                           animationBegin={0}
-                          animationDuration={1000}
+                          animationDuration={1500}
                           animationEasing="ease-out"
+                          stroke="#fff"
+                          strokeWidth={2}
                         >
                           {getPieChartData().map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell key={`cell-${index}`} fill={`url(#gradient-${index})`} />
                           ))}
                         </Pie>
                         <Tooltip 
@@ -1422,6 +1444,12 @@ const DirectorCabinet = () => {
                             `${value} сотрудников (${((value / employees.length) * 100).toFixed(1)}%)`,
                             props.payload.name
                           ]}
+                          contentStyle={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -1429,13 +1457,13 @@ const DirectorCabinet = () => {
                   {/* Legend */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-3">
                     {getPieChartData().map((entry, index) => (
-                      <div key={index} className="flex items-center gap-2 text-xs">
+                      <div key={index} className="flex items-center gap-2 text-xs p-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                         <div 
-                          className="w-3 h-3 rounded-full" 
+                          className="w-3 h-3 rounded-full shadow-sm" 
                           style={{ backgroundColor: entry.color }}
                         />
-                        <span className="truncate">{entry.name}</span>
-                        <span className="font-medium">{entry.value}</span>
+                        <span className="truncate font-medium">{entry.name}</span>
+                        <span className="font-bold text-blue-600">{entry.value}</span>
                       </div>
                     ))}
                   </div>
@@ -1523,26 +1551,30 @@ const DirectorCabinet = () => {
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-xs sm:text-sm font-bold text-green-600 break-words" title={formatCurrency(totalSalary)}>
-                {formatCompactCurrency(totalSalary)}
+              <div className="text-xs font-bold text-green-600" title={formatCurrency(totalSalary)}>
+                <div className="hidden sm:block">{formatCompactCurrency(totalSalary)}</div>
+                <div className="sm:hidden">{formatCompactCurrencyMobile(totalSalary)}</div>
               </div>
               <div className="text-xs text-muted-foreground">Общий фонд</div>
             </div>
             <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-xs sm:text-sm font-bold text-red-600 break-words" title={formatCurrency(totalTaxes)}>
-                {formatCompactCurrency(totalTaxes)}
+              <div className="text-xs font-bold text-red-600" title={formatCurrency(totalTaxes)}>
+                <div className="hidden sm:block">{formatCompactCurrency(totalTaxes)}</div>
+                <div className="sm:hidden">{formatCompactCurrencyMobile(totalTaxes)}</div>
               </div>
               <div className="text-xs text-muted-foreground">Налоги (13%)</div>
             </div>
             <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-xs sm:text-sm font-bold text-blue-600 break-words" title={formatCurrency(netSalary)}>
-                {formatCompactCurrency(netSalary)}
+              <div className="text-xs font-bold text-blue-600" title={formatCurrency(netSalary)}>
+                <div className="hidden sm:block">{formatCompactCurrency(netSalary)}</div>
+                <div className="sm:hidden">{formatCompactCurrencyMobile(netSalary)}</div>
               </div>
               <div className="text-xs text-muted-foreground">К выплате</div>
             </div>
             <div className="text-center p-2 sm:p-3 bg-white dark:bg-gray-800 rounded-lg border">
-              <div className="text-xs sm:text-sm font-bold text-purple-600 break-words" title={formatCurrency(totalSalary / employees.length)}>
-                {formatCompactCurrency(totalSalary / employees.length)}
+              <div className="text-xs font-bold text-purple-600" title={formatCurrency(totalSalary / employees.length)}>
+                <div className="hidden sm:block">{formatCompactCurrency(totalSalary / employees.length)}</div>
+                <div className="sm:hidden">{formatCompactCurrencyMobile(totalSalary / employees.length)}</div>
               </div>
               <div className="text-xs text-muted-foreground">Средняя ЗП</div>
             </div>
