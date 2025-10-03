@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import * as XLSX from 'xlsx';
+import { toast } from "sonner";
 import { 
   Calculator, 
   Users, 
@@ -26,7 +28,8 @@ import {
   Percent,
   Crown,
   Shield,
-  Star
+  Star,
+  Edit
 } from "lucide-react";
 
 const DirectorCabinet = () => {
@@ -36,6 +39,19 @@ const DirectorCabinet = () => {
   const [netSalary, setNetSalary] = useState(0);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [calculatorInput, setCalculatorInput] = useState('0');
+  const [calculatorHistory, setCalculatorHistory] = useState<any[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<any>(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    position: '',
+    department: '',
+    salary: 0,
+    experience: 0,
+    phone: '',
+    email: ''
+  });
 
   // Демо-данные 50 сотрудников
   const demoEmployees = [
@@ -135,6 +151,166 @@ const DirectorCabinet = () => {
     }).format(amount);
   };
 
+  // Калькулятор функции
+  const handleCalculatorInput = (value: string) => {
+    if (calculatorInput === '0' && value !== '.') {
+      setCalculatorInput(value);
+    } else {
+      setCalculatorInput(calculatorInput + value);
+    }
+  };
+
+  const handleCalculatorClear = () => {
+    setCalculatorInput('0');
+  };
+
+  const handleCalculatorBackspace = () => {
+    if (calculatorInput.length > 1) {
+      setCalculatorInput(calculatorInput.slice(0, -1));
+    } else {
+      setCalculatorInput('0');
+    }
+  };
+
+  const handleCalculatorCalculate = () => {
+    try {
+      const result = eval(calculatorInput);
+      const calculation = {
+        expression: calculatorInput,
+        result: result,
+        timestamp: new Date().toLocaleString('ru-RU')
+      };
+      setCalculatorHistory([calculation, ...calculatorHistory]);
+      setCalculatorInput(result.toString());
+      toast.success(`Результат: ${formatCurrency(result)}`);
+    } catch (error) {
+      toast.error('Ошибка в вычислении');
+    }
+  };
+
+  // Экспорт в Excel
+  const exportToExcel = () => {
+    try {
+      // Подготавливаем данные для экспорта
+      const exportData = employees.map(emp => ({
+        'ID': emp.id,
+        'ФИО': emp.name,
+        'Должность': emp.position,
+        'Отдел': emp.department,
+        'Зарплата': emp.salary,
+        'Стаж': emp.experience,
+        'Телефон': emp.phone,
+        'Email': emp.email,
+        'Налог (13%)': Math.round(emp.salary * 0.13),
+        'К выплате': Math.round(emp.salary * 0.87)
+      }));
+
+      // Добавляем итоговую строку
+      exportData.push({
+        'ID': '',
+        'ФИО': 'ИТОГО',
+        'Должность': '',
+        'Отдел': '',
+        'Зарплата': totalSalary,
+        'Стаж': '',
+        'Телефон': '',
+        'Email': '',
+        'Налог (13%)': totalTaxes,
+        'К выплате': netSalary
+      });
+
+      // Создаем рабочую книгу
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+
+      // Настраиваем ширину колонок
+      ws['!cols'] = [
+        { wch: 5 },   // ID
+        { wch: 20 },  // ФИО
+        { wch: 15 },  // Должность
+        { wch: 15 },  // Отдел
+        { wch: 12 },  // Зарплата
+        { wch: 8 },   // Стаж
+        { wch: 15 },  // Телефон
+        { wch: 25 },  // Email
+        { wch: 12 },  // Налог
+        { wch: 12 }   // К выплате
+      ];
+
+      // Добавляем лист в книгу
+      XLSX.utils.book_append_sheet(wb, ws, 'Зарплатная ведомость');
+
+      // Создаем второй лист с расчетами
+      const summaryData = [
+        { 'Показатель': 'Общий фонд оплаты', 'Сумма': totalSalary },
+        { 'Показатель': 'Общий налог (13%)', 'Сумма': totalTaxes },
+        { 'Показатель': 'К выплате', 'Сумма': netSalary },
+        { 'Показатель': 'Средняя зарплата', 'Сумма': Math.round(totalSalary / employees.length) },
+        { 'Показатель': 'Количество сотрудников', 'Сумма': employees.length }
+      ];
+
+      const summaryWs = XLSX.utils.json_to_sheet(summaryData);
+      summaryWs['!cols'] = [{ wch: 25 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(wb, summaryWs, 'Сводка');
+
+      // Сохраняем файл
+      const fileName = `Зарплатная_ведомость_${new Date().toLocaleDateString('ru-RU').replace(/\./g, '_')}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      toast.success(`Файл ${fileName} успешно сохранен!`);
+    } catch (error) {
+      console.error('Ошибка экспорта:', error);
+      toast.error('Ошибка при экспорте в Excel');
+    }
+  };
+
+  // Редактирование сотрудника
+  const startEditEmployee = (employee: any) => {
+    setEditingEmployee(employee);
+    setEditForm({
+      name: employee.name,
+      position: employee.position,
+      department: employee.department,
+      salary: employee.salary,
+      experience: employee.experience,
+      phone: employee.phone,
+      email: employee.email
+    });
+  };
+
+  const saveEmployee = () => {
+    if (editingEmployee) {
+      const updatedEmployees = employees.map(emp => 
+        emp.id === editingEmployee.id ? { ...emp, ...editForm } : emp
+      );
+      setEmployees(updatedEmployees);
+      calculateTotals(updatedEmployees);
+      setEditingEmployee(null);
+      toast.success('Данные сотрудника обновлены');
+    }
+  };
+
+  // Добавление нового сотрудника
+  const addNewEmployee = () => {
+    const newEmployee = {
+      id: Math.max(...employees.map(e => e.id)) + 1,
+      ...editForm
+    };
+    const updatedEmployees = [...employees, newEmployee];
+    setEmployees(updatedEmployees);
+    calculateTotals(updatedEmployees);
+    setEditForm({
+      name: '',
+      position: '',
+      department: '',
+      salary: 0,
+      experience: 0,
+      phone: '',
+      email: ''
+    });
+    toast.success('Новый сотрудник добавлен');
+  };
+
   const getDepartmentColor = (department: string) => {
     const colors: { [key: string]: string } = {
       'Терапия': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
@@ -219,56 +395,240 @@ const DirectorCabinet = () => {
 
       {/* Actions */}
       <section className="px-4 mb-6">
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <Button 
             onClick={() => setShowCalculator(!showCalculator)}
-            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
           >
             <Calculator className="w-4 h-4 mr-2" />
-            Калькулятор ЗП
+            Калькулятор
           </Button>
-          <Button variant="outline" className="flex-1">
-            <FileText className="w-4 h-4 mr-2" />
-            Отчеты
-          </Button>
-          <Button variant="outline" className="flex-1">
+          <Button 
+            onClick={exportToExcel}
+            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+          >
             <Download className="w-4 h-4 mr-2" />
-            Экспорт
+            Экспорт Excel
+          </Button>
+          <Button 
+            onClick={() => setShowHistory(!showHistory)}
+            variant="outline"
+          >
+            <Clock className="w-4 h-4 mr-2" />
+            История
+          </Button>
+          <Button 
+            onClick={() => setEditingEmployee({ id: 0 })}
+            variant="outline"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Добавить
           </Button>
         </div>
       </section>
 
-      {/* Calculator */}
+      {/* Real Calculator */}
       {showCalculator && (
         <section className="px-4 mb-6">
           <Card className="p-6">
             <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Calculator className="w-5 h-5" />
-              Калькулятор зарплаты
+              Профессиональный калькулятор
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* Calculator Display */}
+            <div className="mb-4">
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-right">
+                <div className="text-3xl font-mono font-bold text-gray-900 dark:text-white">
+                  {calculatorInput}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {formatCurrency(parseFloat(calculatorInput) || 0)}
+                </div>
+              </div>
+            </div>
+
+            {/* Calculator Buttons */}
+            <div className="grid grid-cols-4 gap-2">
+              {/* Row 1 */}
+              <Button onClick={handleCalculatorClear} variant="outline" className="bg-red-50 hover:bg-red-100">
+                C
+              </Button>
+              <Button onClick={handleCalculatorBackspace} variant="outline" className="bg-orange-50 hover:bg-orange-100">
+                ←
+              </Button>
+              <Button onClick={() => handleCalculatorInput('/')} variant="outline">
+                ÷
+              </Button>
+              <Button onClick={() => handleCalculatorInput('*')} variant="outline">
+                ×
+              </Button>
+
+              {/* Row 2 */}
+              <Button onClick={() => handleCalculatorInput('7')} variant="outline" className="bg-gray-50 hover:bg-gray-100">
+                7
+              </Button>
+              <Button onClick={() => handleCalculatorInput('8')} variant="outline" className="bg-gray-50 hover:bg-gray-100">
+                8
+              </Button>
+              <Button onClick={() => handleCalculatorInput('9')} variant="outline" className="bg-gray-50 hover:bg-gray-100">
+                9
+              </Button>
+              <Button onClick={() => handleCalculatorInput('-')} variant="outline">
+                −
+              </Button>
+
+              {/* Row 3 */}
+              <Button onClick={() => handleCalculatorInput('4')} variant="outline" className="bg-gray-50 hover:bg-gray-100">
+                4
+              </Button>
+              <Button onClick={() => handleCalculatorInput('5')} variant="outline" className="bg-gray-50 hover:bg-gray-100">
+                5
+              </Button>
+              <Button onClick={() => handleCalculatorInput('6')} variant="outline" className="bg-gray-50 hover:bg-gray-100">
+                6
+              </Button>
+              <Button onClick={() => handleCalculatorInput('+')} variant="outline">
+                +
+              </Button>
+
+              {/* Row 4 */}
+              <Button onClick={() => handleCalculatorInput('1')} variant="outline" className="bg-gray-50 hover:bg-gray-100">
+                1
+              </Button>
+              <Button onClick={() => handleCalculatorInput('2')} variant="outline" className="bg-gray-50 hover:bg-gray-100">
+                2
+              </Button>
+              <Button onClick={() => handleCalculatorInput('3')} variant="outline" className="bg-gray-50 hover:bg-gray-100">
+                3
+              </Button>
+              <Button 
+                onClick={handleCalculatorCalculate} 
+                className="bg-blue-600 hover:bg-blue-700 row-span-2"
+              >
+                =
+              </Button>
+
+              {/* Row 5 */}
+              <Button onClick={() => handleCalculatorInput('0')} variant="outline" className="bg-gray-50 hover:bg-gray-100 col-span-2">
+                0
+              </Button>
+              <Button onClick={() => handleCalculatorInput('.')} variant="outline" className="bg-gray-50 hover:bg-gray-100">
+                .
+              </Button>
+            </div>
+
+            {/* Quick Salary Calculations */}
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <Button 
+                onClick={() => setCalculatorInput('120000 * 13 / 100')}
+                variant="outline"
+                className="text-sm"
+              >
+                Налог 13%
+              </Button>
+              <Button 
+                onClick={() => setCalculatorInput('120000 * 87 / 100')}
+                variant="outline"
+                className="text-sm"
+              >
+                К выплате
+              </Button>
+              <Button 
+                onClick={() => setCalculatorInput('120000 + 15000')}
+                variant="outline"
+                className="text-sm"
+              >
+                + Премия
+              </Button>
+              <Button 
+                onClick={() => setCalculatorInput('120000 - 5000')}
+                variant="outline"
+                className="text-sm"
+              >
+                - Штраф
+              </Button>
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {/* History */}
+      {showHistory && (
+        <section className="px-4 mb-6">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              История вычислений
+            </h3>
+            
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {calculatorHistory.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">
+                  История вычислений пуста
+                </p>
+              ) : (
+                calculatorHistory.map((calc, index) => (
+                  <div key={index} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                    <div>
+                      <div className="font-mono text-sm">{calc.expression}</div>
+                      <div className="text-xs text-muted-foreground">{calc.timestamp}</div>
+                    </div>
+                    <div className="font-bold text-green-600">
+                      {formatCurrency(calc.result)}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {/* Edit Employee Modal */}
+      {editingEmployee && (
+        <section className="px-4 mb-6">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <User className="w-5 h-5" />
+              {editingEmployee.id === 0 ? 'Добавить сотрудника' : 'Редактировать сотрудника'}
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Выберите сотрудника</Label>
-                <select 
-                  value={selectedEmployee?.id || ''}
-                  onChange={(e) => setSelectedEmployee(employees.find(emp => emp.id === parseInt(e.target.value)))}
-                  className="w-full p-2 border rounded-md mt-1"
-                >
-                  <option value="">Выберите сотрудника</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.name}</option>
-                  ))}
-                </select>
+                <Label>ФИО</Label>
+                <Input
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                  placeholder="Введите ФИО"
+                />
               </div>
               
               <div>
-                <Label>Базовая зарплата</Label>
+                <Label>Должность</Label>
+                <Input
+                  value={editForm.position}
+                  onChange={(e) => setEditForm({...editForm, position: e.target.value})}
+                  placeholder="Введите должность"
+                />
+              </div>
+              
+              <div>
+                <Label>Отдел</Label>
+                <Input
+                  value={editForm.department}
+                  onChange={(e) => setEditForm({...editForm, department: e.target.value})}
+                  placeholder="Введите отдел"
+                />
+              </div>
+              
+              <div>
+                <Label>Зарплата</Label>
                 <Input
                   type="number"
-                  value={selectedEmployee?.salary || 0}
-                  onChange={(e) => selectedEmployee && handleSalaryChange(selectedEmployee.id, parseInt(e.target.value))}
-                  className="mt-1"
+                  value={editForm.salary}
+                  onChange={(e) => setEditForm({...editForm, salary: parseInt(e.target.value) || 0})}
+                  placeholder="Введите зарплату"
                 />
               </div>
               
@@ -276,58 +636,45 @@ const DirectorCabinet = () => {
                 <Label>Стаж (лет)</Label>
                 <Input
                   type="number"
-                  value={selectedEmployee?.experience || 0}
-                  className="mt-1"
-                  disabled
+                  value={editForm.experience}
+                  onChange={(e) => setEditForm({...editForm, experience: parseInt(e.target.value) || 0})}
+                  placeholder="Введите стаж"
+                />
+              </div>
+              
+              <div>
+                <Label>Телефон</Label>
+                <Input
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                  placeholder="+7 (999) 123-45-67"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <Label>Email</Label>
+                <Input
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                  placeholder="email@more-clinic.ru"
                 />
               </div>
             </div>
-
-            {selectedEmployee && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Премия</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      type="number"
-                      placeholder="Сумма премии"
-                      id="bonus"
-                    />
-                    <Button 
-                      onClick={() => {
-                        const bonus = parseInt((document.getElementById('bonus') as HTMLInputElement)?.value || '0');
-                        addBonus(selectedEmployee.id, bonus);
-                      }}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label>Штраф</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      type="number"
-                      placeholder="Сумма штрафа"
-                      id="discount"
-                    />
-                    <Button 
-                      onClick={() => {
-                        const discount = parseInt((document.getElementById('discount') as HTMLInputElement)?.value || '0');
-                        applyDiscount(selectedEmployee.id, discount);
-                      }}
-                      size="sm"
-                      variant="destructive"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
+            
+            <div className="flex gap-3 mt-6">
+              <Button 
+                onClick={editingEmployee.id === 0 ? addNewEmployee : saveEmployee}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {editingEmployee.id === 0 ? 'Добавить' : 'Сохранить'}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setEditingEmployee(null)}
+              >
+                Отмена
+              </Button>
+            </div>
           </Card>
         </section>
       )}
@@ -373,14 +720,23 @@ const DirectorCabinet = () => {
                   </div>
                 </div>
                 
-                <div className="text-right">
-                  <div className="text-lg font-bold text-green-600">
-                    {formatCurrency(employee.salary)}
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-green-600">
+                      {formatCurrency(employee.salary)}
+                    </div>
+                    <div className={`text-xs px-2 py-1 rounded-full ${getDepartmentColor(employee.department)} mb-2`}>
+                      {employee.department}
+                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => startEditEmployee(employee)}
+                      className="text-xs"
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Изменить
+                    </Button>
                   </div>
-                  <div className={`text-xs px-2 py-1 rounded-full ${getDepartmentColor(employee.department)}`}>
-                    {employee.department}
-                  </div>
-                </div>
               </div>
             ))}
           </div>
