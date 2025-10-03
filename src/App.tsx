@@ -22,6 +22,7 @@ import Settings from "./pages/Settings";
 import VisitHistory from "./pages/VisitHistory";
 import DoctorAuth from "./pages/DoctorAuth";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import DirectorCabinet from "./pages/DirectorCabinet";
 import { AuthGuard } from "@/components/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
                    <Route path="/auth" element={<Auth />} />
                    <Route path="/doctor-auth" element={<DoctorAuth />} />
                    <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+                   <Route path="/director-cabinet" element={<DirectorCabinet />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/certificates" element={<Certificates />} />
             <Route path="/chat" element={<Chat />} />

@@ -83,6 +83,18 @@ export const Header = () => {
                      </svg>
                    </button>
 
+                   {/* Скрытая кнопка для доступа к кабинету директора */}
+                   <button
+                     onClick={() => navigate('/director-cabinet')}
+                     className="w-10 h-10 flex items-center justify-center bg-yellow-100 dark:bg-yellow-900 rounded-lg shadow-sm hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors"
+                     aria-label="Кабинет директора"
+                     title="Кабинет директора (скрытый доступ)"
+                   >
+                     <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                     </svg>
+                   </button>
+
             {/* Иконка меню */}
             <button
               onClick={handleMenuClick}
