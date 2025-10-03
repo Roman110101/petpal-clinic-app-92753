@@ -29,6 +29,7 @@ const MyPets = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPet, setEditingPet] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const [petForm, setPetForm] = useState({
     name: '',
@@ -60,55 +61,14 @@ const MyPets = () => {
         if (result.success && result.data) {
           setPets(result.data);
         } else {
-          // Если нет питомцев в базе, покажем демо карточки
-          setPets([
-            {
-              id: 1,
-              name: "Барсик",
-              species: "cat",
-              breed: "Мейн-кун",
-              age: 3,
-              color: "Рыжий",
-              weight: 5.2,
-              height: 25,
-              chip: "250268007612345",
-              notes: "Любит играть с мячиками",
-              avatar: null
-            },
-            {
-              id: 2,
-              name: "Рекс",
-              species: "dog",
-              breed: "Немецкая овчарка",
-              age: 2,
-              color: "Черно-подпалый",
-              weight: 28.5,
-              height: 45,
-              chip: "250268007612346",
-              notes: "Очень активный, нуждается в длительных прогулках",
-              avatar: null
-            }
-          ]);
+          // Если нет питомцев в базе, показываем пустой список
+          setPets([]);
         }
       }
     } catch (error) {
       console.error('Error loading pets:', error);
-      // При ошибке показываем демо данные
-      setPets([
-        {
-          id: 1,
-          name: "Барсик",
-          species: "cat",
-          breed: "Мейн-кун",
-          age: 3,
-          color: "Рыжий",
-          weight: 5.2,
-          height: 25,
-          chip: "250268007612345",
-          notes: "Любит играть с мячиками",
-          avatar: null
-        }
-      ]);
+      // При ошибке показываем пустой список
+      setPets([]);
     } finally {
       setIsLoading(false);
     }
@@ -229,6 +189,26 @@ const MyPets = () => {
     }
   };
 
+  const handlePhotoUpload = (pet: any, file: File) => {
+    if (!file) return;
+    
+    // Создаем URL для предварительного просмотра
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const avatarUrl = e.target?.result as string;
+      setPets(prev => prev.map(p => 
+        p.id === pet.id ? { ...p, avatar: avatarUrl } : p
+      ));
+      toast.success('Фото питомца загружено!');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerFileInput = (pet: any) => {
+    setSelectedPet(pet.id);
+    fileInputRef.current?.click();
+  };
+
   return (
     <AuthGuard>
       <div className="bg-background min-h-screen pt-16">
@@ -270,16 +250,24 @@ const MyPets = () => {
                 <Card key={pet.id} className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-2xl">
-                        {pet.avatar ? (
-                          <img 
-                            src={pet.avatar} 
-                            alt={pet.name}
-                            className="w-full h-full object-cover rounded-full"
-                          />
-                        ) : (
-                          <span>{getSpeciesIcon(pet.species)}</span>
-                        )}
+                      <div className="relative">
+                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-2xl">
+                          {pet.avatar ? (
+                            <img 
+                              src={pet.avatar} 
+                              alt={pet.name}
+                              className="w-full h-full object-cover rounded-full"
+                            />
+                          ) : (
+                            <span>{getSpeciesIcon(pet.species)}</span>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => triggerFileInput(pet)}
+                          className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs hover:bg-primary/80 transition-colors"
+                        >
+                          <Camera className="w-4 h-4" />
+                        </button>
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -395,71 +383,24 @@ const MyPets = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="age">Возраст (лет)</Label>
-                      <Input
-                        id="age"
-                        type="number"
-                        value={petForm.age}
-                        onChange={(e) => setPetForm(prev => ({ ...prev, age: e.target.value }))}
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="weight">Вес (кг)</Label>
-                      <Input
-                        id="weight"
-                        type="number"
-                        step="0.1"
-                        value={petForm.weight}
-                        onChange={(e) => setPetForm(prev => ({ ...prev, weight: e.target.value }))}
-                        placeholder="0.0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="height">Рост (см)</Label>
-                      <Input
-                        id="height"
-                        type="number"
-                        value={petForm.height}
-                        onChange={(e) => setPetForm(prev => ({ ...prev, height: e.target.value }))}
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="color">Цвет</Label>
-                      <Input
-                        id="color"
-                        value={petForm.color}
-                        onChange={(e) => setPetForm(prev => ({ ...prev, color: e.target.value }))}
-                        placeholder="Цвет шерсти"
-                      />
-                    </div>
-                  </div>
-
                   <div>
-                    <Label htmlFor="chip">Номер чипа</Label>
+                    <Label htmlFor="age">Возраст (лет)</Label>
                     <Input
-                      id="chip"
-                      value={petForm.chip}
-                      onChange={(e) => setPetForm(prev => ({ ...prev, chip: e.target.value }))}
-                      placeholder="Номер микрочипа"
+                      id="age"
+                      type="number"
+                      value={petForm.age}
+                      onChange={(e) => setPetForm(prev => ({ ...prev, age: e.target.value }))}
+                      placeholder="Введите возраст"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="notes">Примечания</Label>
-                    <textarea
-                      id="notes"
-                      value={petForm.notes}
-                      onChange={(e) => setPetForm(prev => ({ ...prev, notes: e.target.value }))}
-                      placeholder="Дополнительная информация о питомце"
-                      className="w-full p-2 border rounded-md min-h-[80px] resize-none"
-                      rows={3}
+                    <Label htmlFor="color">Цвет</Label>
+                    <Input
+                      id="color"
+                      value={petForm.color}
+                      onChange={(e) => setPetForm(prev => ({ ...prev, color: e.target.value }))}
+                      placeholder="Цвет шерсти"
                     />
                   </div>
 
@@ -477,6 +418,22 @@ const MyPets = () => {
             </Card>
           </div>
         )}
+
+        {/* Hidden file input for photo upload */}
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={(e) => {
+            if (e.target.files && e.target.files[0] && selectedPet) {
+              const pet = pets.find(p => p.id === selectedPet);
+              if (pet) {
+                handlePhotoUpload(pet, e.target.files[0]);
+              }
+            }
+          }} 
+          className="hidden" 
+          accept="image/*"
+        />
 
         {/* Bottom spacing */}
         <div className="h-20"></div>

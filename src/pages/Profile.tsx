@@ -34,10 +34,15 @@ const ProfileReal = () => {
       
       if (user) {
         setCurrentUser(user);
+      } else {
+        // Если пользователь не авторизован, перенаправляем на авторизацию
+        navigate('/auth');
+        return;
       }
     } catch (error) {
       console.error('Error loading user:', error);
       toast.error('Ошибка загрузки данных пользователя');
+      navigate('/auth');
     } finally {
       setIsLoading(false);
     }
