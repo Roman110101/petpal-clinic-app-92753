@@ -33,7 +33,8 @@ import {
   Edit,
   ChevronUp,
   ChevronDown,
-  Calendar
+  Calendar,
+  X
 } from "lucide-react";
 
 const DirectorCabinet = () => {
@@ -72,6 +73,8 @@ const DirectorCabinet = () => {
   const [showPieChart, setShowPieChart] = useState(true);
   const [showLineChart, setShowLineChart] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const [showMonthlyCharts, setShowMonthlyCharts] = useState(false);
 
   // Демо-данные 50 сотрудников
   const demoEmployees = [
@@ -602,17 +605,38 @@ const DirectorCabinet = () => {
 
   const getPieChartDataExcel = () => {
     const stats = getDepartmentStats();
-    // Яркие цвета как в Excel
+    // Яркие цвета как в Excel - убедимся что все цвета используются
     const excelColors = [
       '#4F81BD', '#F79646', '#9BBB59', '#8064A2', '#4BACC6', '#F24E1E',
       '#FF6B35', '#F7931E', '#FFD23F', '#06FFA5', '#118AB2', '#073B4C'
     ];
     
-    return Object.keys(stats).map((dept, index) => ({
+    const data = Object.keys(stats).map((dept, index) => ({
       name: dept,
       value: stats[dept].count,
       color: excelColors[index % excelColors.length]
     }));
+
+    console.log('Pie Chart Data:', data); // Для отладки
+    return data;
+  };
+
+  // Месячные графики
+  const getMonthlyChartData = () => {
+    return getMonthlySalaryData().map((monthData, index) => ({
+      month: monthData.month,
+      netSalary: Math.round(monthData.netSalary),
+      totalSalary: Math.round(monthData.totalSalary),
+      taxes: Math.round(monthData.taxes),
+      isCurrent: monthData.isCurrent,
+      isNext: monthData.isNext
+    }));
+  };
+
+  // Обработчик клика по месяцу
+  const handleMonthClick = (monthIndex: number) => {
+    setSelectedMonth(monthIndex);
+    setShowMonthlyCharts(true);
   };
 
   const getDepartmentColor = (department: string) => {
@@ -630,7 +654,7 @@ const DirectorCabinet = () => {
   };
 
   return (
-    <div className="bg-background min-h-screen pt-16">
+    <div className="bg-background min-h-screen pt-16 overflow-x-hidden">
       {/* Header */}
       <div className="px-4 py-6">
         <div className="flex items-center gap-4 mb-6">
@@ -1466,9 +1490,10 @@ const DirectorCabinet = () => {
                           animationEasing="ease-out"
                           stroke="#fff"
                           strokeWidth={2}
+                          fill="#8884d8"
                         >
                           {getPieChartDataExcel().map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell key={`cell-${index}`} fill={entry.color} stroke={entry.color} strokeWidth={1} />
                           ))}
                         </Pie>
                         <Tooltip 
@@ -1626,24 +1651,56 @@ const DirectorCabinet = () => {
             {getMonthlySalaryData().map((monthData, index) => (
               <div 
                 key={index} 
-                className={`text-center p-2 rounded border ${
+                className={`text-center p-2 rounded border cursor-pointer hover:shadow-md transition-all ${
                   monthData.isCurrent 
                     ? 'bg-green-100 border-green-300 dark:bg-green-900 dark:border-green-700' 
                     : monthData.isNext
                     ? 'bg-blue-100 border-blue-300 dark:bg-blue-900 dark:border-blue-700'
-                    : 'bg-white dark:bg-gray-800'
-                }`}
+                    : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                } ${selectedMonth === index ? 'ring-2 ring-blue-500' : ''}`}
+                onClick={() => handleMonthClick(index)}
               >
                 <div className="text-xs font-bold mb-1">{monthData.month}</div>
                 <div className="text-xs text-green-600 font-medium" title={formatCurrency(monthData.netSalary)}>
                   {formatCompactCurrencyMobile(monthData.netSalary)}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {monthData.isCurrent ? 'Текущий' : monthData.isNext ? 'Следующий' : ''}
+                  {monthData.isCurrent ? 'Текущий' : monthData.isNext ? 'Следующий' : 'Нажмите'}
                 </div>
               </div>
             ))}
           </div>
+          
+          {/* Месячные графики */}
+          {showMonthlyCharts && selectedMonth !== null && (
+            <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg border">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-lg">
+                  Анализ за {getMonthlySalaryData()[selectedMonth].month} месяц
+                </h4>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowMonthlyCharts(false)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={getMonthlyChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [formatCompactCurrency(Number(value)), '']} />
+                    <Bar dataKey="netSalary" fill="#22c55e" name="К выплате" />
+                    <Bar dataKey="taxes" fill="#ef4444" name="Налоги" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
         </Card>
       </section>
 
