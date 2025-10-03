@@ -20,6 +20,8 @@ import NotFound from "./pages/NotFound";
 import MyPets from "./pages/MyPets";
 import Settings from "./pages/Settings";
 import VisitHistory from "./pages/VisitHistory";
+import DoctorAuth from "./pages/DoctorAuth";
+import DoctorDashboard from "./pages/DoctorDashboard";
 import { AuthGuard } from "@/components/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -40,10 +42,12 @@ const App = () => (
             <Route path="/appointment" element={<Appointment />} />
             <Route path="/team" element={<Team />} />
                   <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
-                  <Route path="/my-pets" element={<AuthGuard><MyPets /></AuthGuard>} />
-                  <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
-                  <Route path="/visit-history" element={<AuthGuard><VisitHistory /></AuthGuard>} />
-                  <Route path="/auth" element={<Auth />} />
+                   <Route path="/my-pets" element={<AuthGuard><MyPets /></AuthGuard>} />
+                   <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
+                   <Route path="/visit-history" element={<AuthGuard><VisitHistory /></AuthGuard>} />
+                   <Route path="/auth" element={<Auth />} />
+                   <Route path="/doctor-auth" element={<DoctorAuth />} />
+                   <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/certificates" element={<Certificates />} />
             <Route path="/chat" element={<Chat />} />

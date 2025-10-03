@@ -68,8 +68,20 @@ export const Header = () => {
 
           {/* Иконки справа */}
           <div className="flex items-center gap-2">
-            {/* Меню пользователя - показывает авторизованного пользователя или кнопку входа */}
-            <UserMenu onOpenAuth={() => navigate('/auth')} />
+                   {/* Меню пользователя - показывает авторизованного пользователя или кнопку входа */}
+                   <UserMenu onOpenAuth={() => navigate('/auth')} />
+
+                   {/* Скрытая кнопка для доступа к кабинету врача */}
+                   <button
+                     onClick={() => navigate('/doctor-auth')}
+                     className="w-10 h-10 flex items-center justify-center bg-red-100 dark:bg-red-900 rounded-lg shadow-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                     aria-label="Кабинет врача"
+                     title="Кабинет врача (скрытый доступ)"
+                   >
+                     <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                     </svg>
+                   </button>
 
             {/* Иконка меню */}
             <button
