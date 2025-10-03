@@ -155,28 +155,76 @@ const Auth = () => {
                     onClick={() => {
                       // Определяем домен почты и открываем
                       const emailDomain = formData.email.split('@')[1];
-                      const emailUrls = {
-                        'gmail.com': 'https://gmail.com',
-                        'yandex.ru': 'https://mail.yandex.ru',
-                        'mail.ru': 'https://mail.ru',
-                        'yahoo.com': 'https://mail.yahoo.com',
-                        'outlook.com': 'https://outlook.com',
-                        'hotmail.com': 'https://hotmail.com'
+                      
+                      // Специальные инструкции для разных почтовых сервисов
+                      const emailInstructions = {
+                        'gmail.com': { 
+                          url: 'https://gmail.com',
+                          note: 'Проверьте папку "Входящие" или "Спам"'
+                        },
+                        'yandex.ru': { 
+                          url: 'https://mail.yandex.ru',
+                          note: '⚠️ Яндекс иногда блокирует письма. Проверьте папку "Спам" или попробуйте другой email'
+                        },
+                        'mail.ru': { 
+                          url: 'https://mail.ru',
+                          note: 'Проверьте папку "Входящие" или "Спам"'
+                        },
+                        'yahoo.com': { 
+                          url: 'https://mail.yahoo.com',
+                          note: 'Проверьте папку "Входящие", может попасть в "Спам"'
+                        },
+                        'outlook.com': { 
+                          url: 'https://outlook.com',
+                          note: 'Проверьте все папки, включая "Спам"'
+                        },
+                        'hotmail.com': { 
+                          url: 'https://hotmail.com',
+                          note: 'Проверьте все папки, включая "Спам"'
+                        }
                       };
                       
-                      const url = emailUrls[emailDomain as keyof typeof emailUrls];
-                      if (url) {
-                        window.open(url, '_blank');
+                      const instruction = emailInstructions[emailDomain as keyof typeof emailInstructions];
+                      if (instruction) {
+                        window.open(instruction.url, '_blank');
                         toast.dismiss(t);
-                        toast.success('✅ Почта открыта! Проверьте письмо');
+                        toast.success('✅ Почта открыта!');
+                        toast.info(instruction.note);
                       } else {
                         toast.info('Откройте свой почтовый ящик вручную');
+                        toast.info('📧 Проверьте папку "Спам" - письма часто попадают туда');
                       }
                     }}
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors"
                   >
                     📧 Открыть почту
                   </button>
+                  {/* Дополнительная кнопка для проблемных доменов */}
+                  {formData.email.includes('yandex.') && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const registerData = {
+                            email: formData.email,
+                            password: 'temp123', // временный пароль
+                            firstName: formData.firstName,
+                            lastName: formData.lastName,
+                            phone: formData.phone
+                          };
+                          
+                          await authService.register(registerData);
+                          toast.info('📧 Повторное письмо отправлено на Яндекс');
+                          toast.info('⚠️ Если письмо не приходит, попробуйте Gmail');
+                        } catch (error) {
+                          toast.error('Ошибка при повторной отправке');
+                        }
+                      }}
+                      className="w-full mt-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors"
+                    >
+                      🔄 Отправить повторно для Яндекс
+                    </button>
+                  )}
+                  
                   <button
                     onClick={() => toast.dismiss(t)}
                     className="w-full mt-2 text-gray-500 hover:text-gray-700 text-sm py-1 transition-colors"
@@ -410,9 +458,12 @@ const Auth = () => {
                 </p>
               )}
               {!isLogin && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  После регистрации проверьте email для подтверждения
-                </p>
+                <div className="text-xs text-muted-foreground mt-1">
+                  <p>После регистрации проверьте email для подтверждения</p>
+                  <p className="text-blue-600 font-medium mt-1">
+                    💡 Совет: Яндекс иногда блокирует письма. Для надежности используйте Gmail
+                  </p>
+                </div>
               )}
             </div>
 
