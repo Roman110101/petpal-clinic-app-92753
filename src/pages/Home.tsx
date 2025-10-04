@@ -31,16 +31,19 @@ import {
   FileText,
   User,
   Video,
+  Mic,
 } from "lucide-react";
 import heroImage from "@/assets/hero-dog.jpg";
 import logoImage from "@/assets/logo.png";
 import aboutImage from "@/assets/about-clinic.jpg";
 import { doctors } from "@/data/doctors";
+import VoiceAssistant from "@/components/VoiceAssistant";
 
 const Home = () => {
   const navigate = useNavigate();
   const [activeAccordion, setActiveAccordion] = useState<string | undefined>(undefined);
   const [selectedPetType, setSelectedPetType] = useState<'dog' | 'cat'>('dog');
+  const [isVoiceAssistantOpen, setIsVoiceAssistantOpen] = useState(false);
   const accordionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const isScrollingRef = useRef(false);
 
@@ -865,7 +868,7 @@ const Home = () => {
       {/* Quick Actions */}
       <section className="px-4 mt-12">
         <h2 className="text-xl font-semibold text-foreground mb-4">Быстрые действия</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div
             className="bg-pink-100 dark:bg-pink-950/30 rounded-lg p-4 flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform"
             onClick={() => navigate("/appointment")}
@@ -893,6 +896,13 @@ const Home = () => {
           >
             <User className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             <span className="text-sm font-medium text-teal-700 dark:text-teal-300">Кабинет</span>
+          </div>
+          <div
+            className="bg-green-100 dark:bg-green-950/30 rounded-lg p-4 flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform"
+            onClick={() => setIsVoiceAssistantOpen(true)}
+          >
+            <Mic className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <span className="text-sm font-medium text-green-700 dark:text-green-300">Голос</span>
           </div>
         </div>
       </section>
@@ -954,6 +964,12 @@ const Home = () => {
         </Card>
       </section>
       </div>
+      
+      {/* Voice Assistant */}
+      <VoiceAssistant 
+        isOpen={isVoiceAssistantOpen}
+        onClose={() => setIsVoiceAssistantOpen(false)}
+      />
     </div>
   );
 };
