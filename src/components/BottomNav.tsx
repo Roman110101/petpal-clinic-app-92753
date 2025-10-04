@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, Calendar, Stethoscope, MapPin } from "lucide-react";
+import { Home, Calendar, Stethoscope, MapPin, Video } from "lucide-react";
 import { useEffect } from "react";
 
 export const BottomNav = () => {
@@ -23,7 +23,8 @@ export const BottomNav = () => {
   const navItems = [
     { to: "/", icon: Home, label: "Главная", color: "text-blue-500" },
     { to: "/services", icon: Stethoscope, label: "Услуги", color: "text-green-500" },
-    { to: "/branches", icon: MapPin, label: "Филиалы", color: "text-red-500" },
+    { to: "/telemedicine", icon: Video, label: "Видео", color: "text-cyan-500" },
+    { to: "/branches", icon: MapPin, label: "Филиалы", color: "text-primary" },
     { to: "/appointment", icon: Calendar, label: "Запись", color: "text-purple-500" },
   ];
 

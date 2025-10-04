@@ -21,7 +21,7 @@ import {
   Clock,
   Target,
   BarChart3,
-  PieChart,
+  PieChart as PieChartIcon,
   FileText,
   Download,
   Plus,
@@ -33,7 +33,6 @@ import {
   Edit,
   ChevronUp,
   ChevronDown,
-  Calendar,
   X
 } from "lucide-react";
 
@@ -69,6 +68,9 @@ const DirectorCabinet = () => {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showCharts, setShowCharts] = useState(false);
   const [timeFilter, setTimeFilter] = useState('all');
+  const [showEmployeeListModal, setShowEmployeeListModal] = useState(false);
+  const [showChartsModal, setShowChartsModal] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
   const [showBarChart, setShowBarChart] = useState(true);
   const [showPieChart, setShowPieChart] = useState(true);
   const [showLineChart, setShowLineChart] = useState(true);
@@ -174,6 +176,15 @@ const DirectorCabinet = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
+  };
+
+  const formatCompact = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}М₽`;
+    } else if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(0)}К₽`;
+    }
+    return `${amount.toLocaleString('ru-RU')}₽`;
   };
 
   const formatCompactCurrency = (amount: number) => {
@@ -623,10 +634,11 @@ const DirectorCabinet = () => {
 
   const getPieChartDataExcel = () => {
     const stats = getDepartmentStats();
-    // Яркие цвета как в Excel - убедимся что все цвета используются
+    // Современные профессиональные цвета
     const excelColors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3',
-      '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43', '#10AC84', '#EE5A24'
+      '#00CFDB', '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444',
+      '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#14B8A6', '#F43F5E',
+      '#A855F7', '#22C55E', '#EAB308', '#6366F1', '#D946EF', '#0EA5E9'
     ];
     
     const data = Object.keys(stats).map((dept, index) => ({
@@ -648,6 +660,25 @@ const DirectorCabinet = () => {
       taxes: Math.round(monthData.taxes),
       isCurrent: monthData.isCurrent,
       isNext: monthData.isNext
+    }));
+  };
+
+  // Функции для модального окна графиков
+  const getBarChartData = () => {
+    const stats = getDepartmentStats();
+    return Object.keys(stats).map(dept => ({
+      department: dept,
+      totalSalary: stats[dept].totalSalary,
+      employees: stats[dept].count
+    }));
+  };
+
+  const getLineChartData = () => {
+    const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+    return months.map((month, index) => ({
+      month: month,
+      totalSalary: totalSalary + (Math.random() * 100000 - 50000), // Вариация для демо
+      employees: employees.length + Math.floor(Math.random() * 5 - 2) // Небольшая вариация сотрудников
     }));
   };
 
@@ -676,63 +707,79 @@ const DirectorCabinet = () => {
       {/* Header */}
       <div className="px-4 py-6">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-            <Crown className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+            <Building2 className="w-8 h-8 text-white" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-foreground">Кабинет директора</h1>
             <p className="text-muted-foreground">Дмитрий Алексеевич - Управление персоналом</p>
+            
+            {/* Пометка о доступе */}
+            <div className="mt-3 p-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+              <p className="text-sm text-purple-800 dark:text-purple-200 font-medium">
+                🔒 Служебный доступ
+              </p>
+              <p className="text-xs text-purple-700 dark:text-purple-300">
+                Доступ только для руководства клиники
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Quick Stats */}
       <section className="px-4 mb-6">
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Card className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-emerald-200 dark:border-emerald-800">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-3xl font-bold text-green-700 dark:text-green-300">{employees.length}</div>
-                <div className="text-sm text-green-600 dark:text-green-400">Сотрудников</div>
+                <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{employees.length}</div>
+                <div className="text-xs text-emerald-600 dark:text-emerald-400">Сотрудников</div>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+          <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{formatCurrency(totalSalary)}</div>
-                <div className="text-sm text-blue-600 dark:text-blue-400">Фонд оплаты</div>
+                <div className="text-lg font-bold text-blue-700 dark:text-blue-300 truncate" title={formatCurrency(totalSalary)}>
+                  {formatCompact(totalSalary)}
+                </div>
+                <div className="text-xs text-blue-600 dark:text-blue-400">Фонд оплаты</div>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800">
+          <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border-amber-200 dark:border-amber-800">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-red-700 dark:text-red-300">{formatCurrency(totalTaxes)}</div>
-                <div className="text-sm text-red-600 dark:text-red-400">Налоги</div>
+                <div className="text-lg font-bold text-amber-700 dark:text-amber-300 truncate" title={formatCurrency(totalTaxes)}>
+                  {formatCompact(totalTaxes)}
+                </div>
+                <div className="text-xs text-amber-600 dark:text-amber-400">Налоги</div>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
+          <Card className="p-4 bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-950 dark:to-violet-900 border-violet-200 dark:border-violet-800">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-                <Target className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-violet-500 rounded-lg flex items-center justify-center">
+                <Target className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">{formatCurrency(netSalary)}</div>
-                <div className="text-sm text-purple-600 dark:text-purple-400">К выплате</div>
+                <div className="text-lg font-bold text-violet-700 dark:text-violet-300 truncate" title={formatCurrency(netSalary)}>
+                  {formatCompact(netSalary)}
+                </div>
+                <div className="text-xs text-violet-600 dark:text-violet-400">К выплате</div>
               </div>
             </div>
           </Card>
@@ -741,35 +788,34 @@ const DirectorCabinet = () => {
 
       {/* Actions */}
       <section className="px-4 mb-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <Button 
             onClick={() => setShowSmartCalculator(!showSmartCalculator)}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 col-span-2 lg:col-span-1"
+            className="h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-sm"
           >
             <Calculator className="w-4 h-4 mr-2" />
-            Умный калькулятор
-          </Button>
-          <Button 
-            onClick={exportToExcel}
-            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Экспорт Excel
+            <span className="text-sm">Калькулятор</span>
           </Button>
           <Button 
             onClick={() => setShowImportModal(true)}
-            variant="outline"
-            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0"
+            className="h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-0 shadow-sm"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Импорт Excel
+            <FileText className="w-4 h-4 mr-2" />
+            <span className="text-sm">Импорт Excel</span>
           </Button>
           <Button 
-            onClick={() => setEditingEmployee({ id: 0 })}
-            variant="outline"
+            onClick={() => setShowStatsModal(true)}
+            className="h-12 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-0 shadow-sm"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Добавить
+            <PieChartIcon className="w-4 h-4 mr-2" />
+            <span className="text-sm">Статистика</span>
+          </Button>
+          <Button 
+            onClick={exportToExcel}
+            className="h-12 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white border-0 shadow-sm"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            <span className="text-sm">Экспорт Excel</span>
           </Button>
         </div>
       </section>
@@ -1210,142 +1256,75 @@ const DirectorCabinet = () => {
         </section>
       )}
 
-      {/* Employee List */}
+      {/* Employee Management */}
       <section className="px-4 mb-6">
-        <Card className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-            <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Список сотрудников ({employees.length})
-            </h3>
-            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+        <Card className="p-4">
+          {/* Header with clear actions */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Управление персоналом</h3>
+                <p className="text-sm text-muted-foreground">{employees.length} сотрудников</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                size="sm"
+                onClick={() => setShowEmployeeListModal(true)}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Просмотр сотрудников
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowStatistics(!showStatistics)}
-                className="flex-1 sm:flex-none"
               >
-                <BarChart3 className="w-4 h-4 mr-1" />
+                <PieChartIcon className="w-4 h-4 mr-2" />
                 Статистика
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowCharts(!showCharts)}
-                className="flex-1 sm:flex-none"
               >
-                <PieChart className="w-4 h-4 mr-1" />
+                <BarChart3 className="w-4 h-4 mr-2" />
                 Графики
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => setShowEmployees(!showEmployees)}
-                className="flex-1 sm:flex-none"
+                onClick={() => setShowChartsModal(true)}
               >
-                {showEmployees ? (
-                  <>
-                    <ChevronUp className="w-4 h-4 mr-1" />
-                    Скрыть
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-4 h-4 mr-1" />
-                    Показать
-                  </>
-                )}
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Модальные графики
               </Button>
             </div>
           </div>
 
-          {showEmployees && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
-              {employees.map((employee) => (
-              <div key={employee.id} className="p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
-                    {employee.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1 mb-1">
-                      <h4 className="font-semibold text-xs sm:text-sm truncate">{employee.name}</h4>
-                      {employee.position === 'Директор' && <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />}
-                      {employee.experience >= 10 && <Star className="w-3 h-3 text-blue-500 flex-shrink-0" />}
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">{employee.position}</p>
-                    <div className={`inline-block text-xs px-2 py-1 rounded-full mt-1 ${getDepartmentColor(employee.department)}`}>
-                      {employee.department}
-                    </div>
-                  </div>
+          {/* Employee Summary */}
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                  <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
-                
-                <div className="space-y-1 sm:space-y-2">
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs text-muted-foreground">Зарплата:</span>
-                    <div className="text-right">
-                      {editingSalaryId === employee.id ? (
-                        <div className="space-y-1">
-                          <Input
-                            type="number"
-                            value={tempSalary}
-                            onChange={(e) => setTempSalary(e.target.value)}
-                            onKeyDown={handleSalaryKeyPress}
-                            className="text-xs h-6 sm:h-7 w-16 sm:w-20"
-                            autoFocus
-                          />
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              onClick={saveSalaryEdit}
-                              className="h-4 sm:h-5 px-1 sm:px-2 text-xs bg-green-600 hover:bg-green-700"
-                            >
-                              ✓
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={cancelSalaryEdit}
-                              className="h-4 sm:h-5 px-1 sm:px-2 text-xs"
-                            >
-                              ✕
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          <span 
-                            className="font-bold text-green-600 text-xs sm:text-sm cursor-pointer hover:text-green-700 transition-colors"
-                            onClick={() => startSalaryEdit(employee.id, employee.salary)}
-                            title={`Нажмите для редактирования: ${formatCurrency(employee.salary)}`}
-                          >
-                            <div className="hidden sm:block">{formatCompactCurrency(employee.salary)}</div>
-                            <div className="sm:hidden">{formatCompactCurrencyMobile(employee.salary)}</div>
-                          </span>
-                          <div className="text-xs text-muted-foreground">
-                            Нажмите для изменения
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">Стаж:</span>
-                    <span className="text-xs">{employee.experience} лет</span>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => startEditEmployee(employee)}
-                    className="w-full text-xs mt-1 sm:mt-2 h-7 sm:h-8"
-                  >
-                    <Edit className="w-3 h-3 mr-1" />
-                    Изменить
-                  </Button>
+                <div>
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100">Всего сотрудников: {employees.length}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Нажмите "Просмотр сотрудников" для детальной информации</p>
                 </div>
               </div>
-              ))}
+              <div className="text-right">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Общий фонд оплаты</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCompact(totalSalary)}</p>
+              </div>
             </div>
-          )}
+          </div>
         </Card>
       </section>
 
@@ -1422,7 +1401,7 @@ const DirectorCabinet = () => {
           <Card className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <h3 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-                <PieChart className="w-5 h-5" />
+                <PieChartIcon className="w-5 h-5" />
                 Графики и диаграммы
               </h3>
               
@@ -1507,22 +1486,22 @@ const DirectorCabinet = () => {
                           data={getPieChartDataExcel()}
                           cx="50%"
                           cy="50%"
-                          innerRadius={30}
-                          outerRadius={80}
-                          paddingAngle={3}
+                          innerRadius={40}
+                          outerRadius={90}
+                          paddingAngle={5}
                           dataKey="value"
                           animationBegin={0}
-                          animationDuration={1500}
+                          animationDuration={2000}
                           animationEasing="ease-out"
                           stroke="#ffffff"
-                          strokeWidth={3}
+                          strokeWidth={4}
                         >
                           {getPieChartDataExcel().map((entry, index) => (
                             <Cell 
                               key={`cell-${index}`} 
                               fill={`url(#gradient-${index})`}
                               stroke="#ffffff"
-                              strokeWidth={3}
+                              strokeWidth={4}
                             />
                           ))}
                         </Pie>
@@ -1673,11 +1652,11 @@ const DirectorCabinet = () => {
             Анализ зарплат по месяцам
           </h3>
           
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-1">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
             {getMonthlySalaryData().map((monthData, index) => (
               <div 
                 key={index} 
-                className={`text-center p-1 rounded border cursor-pointer hover:shadow-md transition-all ${
+                className={`text-center p-2 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
                   monthData.isCurrent 
                     ? 'bg-green-100 border-green-300 dark:bg-green-900 dark:border-green-700' 
                     : monthData.isNext
@@ -1686,8 +1665,8 @@ const DirectorCabinet = () => {
                 } ${selectedMonth === index ? 'ring-2 ring-blue-500' : ''}`}
                 onClick={() => handleMonthClick(index)}
               >
-                <div className="text-xs font-bold">{monthData.month}</div>
-                <div className="text-xs text-green-600 font-medium" title={formatCurrency(monthData.netSalary)}>
+                <div className="text-sm font-bold">{monthData.month}</div>
+                <div className="text-sm text-green-600 font-medium" title={formatCurrency(monthData.netSalary)}>
                   {formatSuperCompact(monthData.netSalary)}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -1734,6 +1713,269 @@ const DirectorCabinet = () => {
 
       {/* Bottom Spacing */}
       <div className="h-20"></div>
+
+      {/* Employee List Modal - Full Screen */}
+      {showEmployeeListModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-0">
+          <div className="bg-white dark:bg-gray-900 w-full h-full max-w-none max-h-none overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <h2 className="text-xl font-semibold">Список сотрудников ({employees.length})</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEmployeeListModal(false)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="grid gap-2">
+                {employees.map((employee) => (
+                  <div key={employee.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                      {/* Avatar */}
+                      <div className="md:col-span-1 flex justify-center md:justify-start">
+                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                      </div>
+                      
+                      {/* Name and Position */}
+                      <div className="md:col-span-3 text-center md:text-left">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm md:text-base truncate">{employee.name}</h4>
+                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate">{employee.position}</p>
+                      </div>
+                      
+                      {/* Department */}
+                      <div className="md:col-span-2 text-center md:text-left">
+                        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-500 truncate">{employee.department}</p>
+                      </div>
+                      
+                      {/* Experience */}
+                      <div className="md:col-span-1 text-center md:text-left">
+                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{employee.experience} лет</p>
+                      </div>
+                      
+                      {/* Salary */}
+                      <div className="md:col-span-2 text-center md:text-left">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm md:text-base">{formatCompact(employee.salary)}</p>
+                      </div>
+                      
+                      {/* Phone */}
+                      <div className="md:col-span-2 text-center md:text-left">
+                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate">{employee.phone}</p>
+                      </div>
+                      
+                      {/* Actions */}
+                      <div className="md:col-span-1 flex justify-center md:justify-end gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingEmployee(employee)}
+                          className="h-7 w-7 p-0"
+                          title="Изменить"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const updated = employees.filter(emp => emp.id !== employee.id);
+                            setEmployees(updated);
+                            calculateTotals(updated);
+                            toast.success('Сотрудник удален');
+                          }}
+                          className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          title="Удалить"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Mobile Email - Hidden on desktop */}
+                    <div className="md:hidden mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        Email: {employee.email}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Всего сотрудников: {employees.length}
+              </div>
+              <Button
+                onClick={() => {
+                  setShowEmployeeListModal(false);
+                  setEditingEmployee({ id: 0 });
+                }}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Добавить сотрудника
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Charts Modal - Full Screen */}
+      {showChartsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-0">
+          <div className="bg-white dark:bg-gray-900 w-full h-full max-w-none max-h-none overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <h2 className="text-xl font-semibold">Графики и аналитика</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowChartsModal(false)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="grid gap-6">
+                {/* Bar Chart */}
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-4">Распределение зарплат по отделам</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getBarChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="department" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [formatCompact(Number(value)), '']} />
+                        <Bar dataKey="totalSalary" fill="#22c55e" name="Зарплата" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Line Chart */}
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-4">Тренд зарплат по месяцам</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={getLineChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [formatCompact(Number(value)), '']} />
+                        <Line type="monotone" dataKey="totalSalary" stroke="#3b82f6" strokeWidth={2} name="Зарплата" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Statistics Modal */}
+      {showStatsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold">Статистика и анализ</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowStatsModal(false)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <div className="grid gap-6">
+                {/* Pie Chart */}
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-4">Распределение сотрудников по отделам</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={getPieChartData()}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={80}
+                          outerRadius={140}
+                          paddingAngle={5}
+                          dataKey="value"
+                          strokeWidth={2}
+                          animationDuration={1000}
+                        >
+                          {getPieChartData().map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => [value, 'сотрудников']} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-blue-600 dark:text-blue-400">Средняя зарплата</p>
+                        <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{formatCompact(totalSalary / employees.length)}</p>
+                      </div>
+                      <TrendingUp className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 dark:bg-green-900 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-green-600 dark:text-green-400">Максимальная зарплата</p>
+                        <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatCompact(Math.max(...employees.map(e => e.salary)))}</p>
+                      </div>
+                      <Award className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-purple-50 dark:bg-purple-900 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-purple-600 dark:text-purple-400">Минимальная зарплата</p>
+                        <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{formatCompact(Math.min(...employees.map(e => e.salary)))}</p>
+                      </div>
+                      <TrendingDown className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-50 dark:bg-amber-900 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-amber-600 dark:text-amber-400">Средний опыт</p>
+                        <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{(employees.reduce((sum, e) => sum + e.experience, 0) / employees.length).toFixed(1)} лет</p>
+                      </div>
+                      <Clock className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

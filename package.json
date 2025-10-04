@@ -13,7 +13,10 @@
     "server:full": "node server/server.cjs",
     "server:build": "tsc -p server/tsconfig.json",
     "server:start": "node server/dist/index.js",
+    "server:https": "node simple-https-server.js",
+    "server:mobile": "node simple-https-server.js",
     "dev:full": "concurrently \"npm run dev\" \"npm run server:dev\"",
+    "dev:https": "concurrently \"npm run build\" \"npm run server:https\"",
     "start": "npm run server:start"
   },
   "dependencies": {

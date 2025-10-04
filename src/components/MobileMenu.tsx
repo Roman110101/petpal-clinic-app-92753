@@ -9,7 +9,7 @@ import React, {
   useLayoutEffect,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ChevronRight, ArrowLeft, Stethoscope, Crown } from "lucide-react";
+import { X, ChevronRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Импорты прайс-листов
@@ -561,35 +561,6 @@ const MobileMenu = forwardRef<MobileMenuRef, MobileMenuProps>(
                     <ChevronRight className="w-5 h-5" />
                   </button>
 
-                  {/* Скрытая кнопка: Кабинет врача */}
-                  <button
-                    onClick={() => handleNavigation('/doctor-auth')}
-                    className="flex items-center justify-between py-3 text-left text-red-600 dark:text-red-400 text-lg font-medium border-l-4 border-red-200 dark:border-red-800 pl-4 mt-4"
-                    title="Служебный доступ для врачей"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
-                        <Stethoscope className="w-4 h-4 text-red-600" />
-                      </div>
-                      <span>Кабинет врача</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-
-                  {/* Скрытая кнопка: Кабинет директора */}
-                  <button
-                    onClick={() => handleNavigation('/director-cabinet')}
-                    className="flex items-center justify-between py-3 text-left text-yellow-600 dark:text-yellow-400 text-lg font-medium border-l-4 border-yellow-200 dark:border-yellow-800 pl-4 mt-2"
-                    title="Служебный доступ для директора"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
-                        <Crown className="w-4 h-4 text-yellow-600" />
-                      </div>
-                      <span>Кабинет директора</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
                 </div>
               ) : (
                 <div className="px-4 mt-6">

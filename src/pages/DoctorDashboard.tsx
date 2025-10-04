@@ -158,7 +158,7 @@ const DoctorDashboard = () => {
       case 'confirmed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
       case 'waiting': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
       case 'completed': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'urgent': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case 'urgent': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
     }
   };
@@ -200,7 +200,7 @@ const DoctorDashboard = () => {
         title="Кабинет врача"
         subtitle={`Добро пожаловать, ${currentDoctor?.name}!`}
       >
-        <Button variant="outline" size="sm" onClick={handleLogout} className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100">
+        <Button variant="outline" size="sm" onClick={handleLogout} className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
           <LogOut className="w-4 h-4 mr-2" />
           Выйти
         </Button>
@@ -208,16 +208,16 @@ const DoctorDashboard = () => {
 
       {/* Doctor Info */}
       <section className="px-4 mb-6">
-        <Card className="p-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
+        <Card className="p-6 bg-blue-50 dark:bg-blue-950 border-red-200 dark:border-red-800">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-              <Stethoscope className="w-8 h-8 text-red-600" />
+            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+              <Stethoscope className="w-8 h-8 text-blue-600" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-red-900 dark:text-red-100">
+              <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
                 {currentDoctor?.name}
               </h3>
-              <p className="text-sm text-red-700 dark:text-red-300">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
                 {currentDoctor?.specialization}
               </p>
               <div className="flex items-center gap-1 mt-2">
@@ -226,10 +226,10 @@ const DoctorDashboard = () => {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-red-700 dark:text-red-300">
+              <div className="text-sm text-blue-700 dark:text-blue-300">
                 {new Date().toLocaleDateString('ru-RU')}
               </div>
-              <div className="text-xs text-red-600 dark:text-red-400">
+              <div className="text-xs text-blue-600 dark:text-blue-400">
                 {new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>

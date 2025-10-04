@@ -30,6 +30,7 @@ import {
   MessageCircle,
   FileText,
   User,
+  Video,
 } from "lucide-react";
 import heroImage from "@/assets/hero-dog.jpg";
 import logoImage from "@/assets/logo.png";
@@ -119,7 +120,7 @@ const Home = () => {
           <div className="flex gap-2.5 justify-center w-full max-w-sm">
             <button
               onClick={() => window.location.href = "tel:+79250920272"}
-              className="flex-1 bg-primary text-primary-foreground py-4 px-6 rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all duration-200 active:scale-95"
+              className="flex-1 bg-green-500 text-white py-4 px-6 rounded-lg font-semibold text-sm hover:bg-green-600 transition-all duration-200 active:scale-95"
             >
               Позвонить
             </button>
@@ -129,6 +130,17 @@ const Home = () => {
               style={{backgroundColor: '#272727'}}
             >
               Консультация
+            </button>
+          </div>
+
+          {/* Телемедицина CTA */}
+          <div className="mt-4 w-full max-w-sm">
+            <button
+              onClick={() => navigate("/telemedicine")}
+              className="w-full bg-primary text-primary-foreground py-4 px-6 rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+            >
+              <Video className="w-4 h-4" />
+              Видеоконсультация
             </button>
           </div>
         </div>

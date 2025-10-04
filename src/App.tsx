@@ -23,6 +23,7 @@ import VisitHistory from "./pages/VisitHistory";
 import DoctorAuth from "./pages/DoctorAuth";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DirectorCabinet from "./pages/DirectorCabinet";
+import Telemedicine from "./pages/Telemedicine";
 import { AuthGuard } from "@/components/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/certificates" element={<Certificates />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/telemedicine" element={<Telemedicine />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -123,6 +123,16 @@ const DoctorAuth = () => {
             <p className="text-sm text-muted-foreground">
               Служебная панель медицинского персонала
             </p>
+            
+            {/* Пометка о доступе */}
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                🔒 Служебный доступ
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                Доступ только для медицинского персонала клиники
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -133,8 +143,8 @@ const DoctorAuth = () => {
           {/* Logo */}
           <div className="text-center mb-6">
             <div className="w-20 h-20 mx-auto mb-3 flex items-center justify-center">
-              <div className="w-full h-full bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-                <Stethoscope className="w-10 h-10 text-red-600" />
+              <div className="w-full h-full bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <Stethoscope className="w-10 h-10 text-blue-600" />
               </div>
             </div>
             <h2 className="text-xl font-semibold text-foreground">
@@ -164,7 +174,7 @@ const DoctorAuth = () => {
                 />
               </div>
               {errors.email && (
-                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <p className="text-blue-500 text-xs mt-1 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
                   {errors.email}
                 </p>
@@ -196,7 +206,7 @@ const DoctorAuth = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <p className="text-blue-500 text-xs mt-1 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
                   {errors.password}
                 </p>
@@ -207,7 +217,7 @@ const DoctorAuth = () => {
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="w-full h-12 text-base font-medium mt-6 bg-red-600 hover:bg-red-700"
+              className="w-full h-12 text-base font-medium mt-6 bg-blue-600 hover:bg-blue-700"
             >
               {isLoading ? (
                 <>
@@ -227,22 +237,22 @@ const DoctorAuth = () => {
 
       {/* Demo Credentials */}
       <section className="px-4 mt-6 mb-6">
-        <Card className="p-4 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
+        <Card className="p-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-red-600" />
+            <CheckCircle className="w-5 h-5 text-blue-600" />
             Демо-доступ для врачей
           </h3>
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
               <span><strong>Терапевт:</strong> doctor@more-clinic.ru / doctor123</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
               <span><strong>Хирург:</strong> surgeon@more-clinic.ru / surgeon123</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
               <span><strong>Админ:</strong> admin@more-clinic.ru / admin123</span>
             </div>
           </div>
