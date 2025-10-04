@@ -54,7 +54,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
       recognitionRef.current.interimResults = false;
       recognitionRef.current.lang = 'ru-RU';
 
-      recognitionRef.current.onresult = (event) => {
+      recognitionRef.current.onresult = async (event) => {
         try {
           const transcript = event.results[0][0].transcript;
           console.log('🎤 Распознан текст:', transcript);
@@ -67,7 +67,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
           };
           
           setMessages(prev => [...prev, userMessage]);
-          sendTextMessage(transcript);
+          await sendTextMessage(transcript);
         } catch (error) {
           console.error('Ошибка обработки результата распознавания:', error);
           toast.error('Ошибка обработки речи');
@@ -128,8 +128,68 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  // Озвучивание текста
-  const speakText = (text: string) => {
+  // Озвучивание текста через ElevenLabs
+  const speakText = async (text: string) => {
+    try {
+      setIsSpeaking(true);
+      toast.success('🔊 Дарья говорит...', { duration: 1000 });
+
+      // Пытаемся использовать ElevenLabs API
+      const response = await fetch('/api/synthesize-speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.success && data.audio) {
+          // Воспроизводим аудио от ElevenLabs
+          const audioData = atob(data.audio);
+          const audioArray = new Uint8Array(audioData.length);
+          for (let i = 0; i < audioData.length; i++) {
+            audioArray[i] = audioData.charCodeAt(i);
+          }
+
+          const audioBlob = new Blob([audioArray], { type: 'audio/mpeg' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const audio = new Audio(audioUrl);
+
+          audio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            setIsSpeaking(false);
+          };
+
+          audio.onerror = (error) => {
+            console.error('Ошибка воспроизведения аудио:', error);
+            URL.revokeObjectURL(audioUrl);
+            setIsSpeaking(false);
+            // Fallback на браузерный голос
+            fallbackSpeechSynthesis(text);
+          };
+
+          await audio.play();
+          return;
+        }
+      }
+
+      // Если ElevenLabs не работает, используем браузерный голос
+      console.log('⚠️ ElevenLabs недоступен, используем браузерный голос');
+      fallbackSpeechSynthesis(text);
+
+    } catch (error) {
+      console.error('Ошибка ElevenLabs:', error);
+      setIsSpeaking(false);
+      // Fallback на браузерный голос
+      fallbackSpeechSynthesis(text);
+    }
+  };
+
+  // Fallback - браузерный голос
+  const fallbackSpeechSynthesis = (text: string) => {
     try {
       if (!('speechSynthesis' in window)) {
         toast.error('Озвучивание речи не поддерживается в вашем браузере');
@@ -140,9 +200,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
       
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ru-RU';
-      utterance.rate = 0.9;
-      utterance.pitch = 1.05;
-      utterance.volume = 1.0;
+      utterance.rate = 0.85;
+      utterance.pitch = 1.1;
+      utterance.volume = 0.9;
 
       // Безопасный выбор голоса
       try {
@@ -151,7 +211,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
           const russianVoices = voices.filter(voice => voice && voice.lang && voice.lang.startsWith('ru'));
           
           if (russianVoices.length > 0) {
-            // Предпочитаем женские голоса
             const femaleVoice = russianVoices.find(voice => 
               voice.name && (
                 voice.name.toLowerCase().includes('женский') || 
@@ -170,12 +229,10 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
         }
       } catch (voiceError) {
         console.warn('Не удалось выбрать голос:', voiceError);
-        // Продолжаем без выбора голоса
       }
 
       utterance.onstart = () => {
         setIsSpeaking(true);
-        toast.success('🔊 Дарья говорит...', { duration: 1000 });
       };
 
       utterance.onend = () => {
@@ -183,7 +240,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
       };
 
       utterance.onerror = (event) => {
-        console.error('Ошибка воспроизведения голоса:', event);
+        console.error('Ошибка браузерного голоса:', event);
         setIsSpeaking(false);
         toast.error('Ошибка воспроизведения голоса');
       };
@@ -191,14 +248,13 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
       synthesisRef.current = utterance;
       window.speechSynthesis.speak(utterance);
     } catch (error) {
-      console.error('Ошибка в speakText:', error);
+      console.error('Ошибка fallback голоса:', error);
       setIsSpeaking(false);
-      toast.error('Ошибка озвучивания текста');
     }
   };
 
   // Отправка текстового сообщения
-  const sendTextMessage = (text: string) => {
+  const sendTextMessage = async (text: string) => {
     if (!text.trim()) return;
 
     setIsProcessing(true);
@@ -215,10 +271,10 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
       
       setMessages(prev => [...prev, assistantMessage]);
       
-      // Автоматически говорим ответ
-      setTimeout(() => {
+      // Автоматически говорим ответ через ElevenLabs
+      setTimeout(async () => {
         try {
-          speakText(responseText);
+          await speakText(responseText);
         } catch (speakError) {
           console.error('Ошибка при озвучивании:', speakError);
         }
