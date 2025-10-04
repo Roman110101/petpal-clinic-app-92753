@@ -55,18 +55,23 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
       recognitionRef.current.lang = 'ru-RU';
 
       recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        console.log('🎤 Распознан текст:', transcript);
-        
-        const userMessage: VoiceMessage = {
-          id: Date.now().toString(),
-          text: transcript,
-          sender: 'user',
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, userMessage]);
-        sendTextMessage(transcript);
+        try {
+          const transcript = event.results[0][0].transcript;
+          console.log('🎤 Распознан текст:', transcript);
+          
+          const userMessage: VoiceMessage = {
+            id: Date.now().toString(),
+            text: transcript,
+            sender: 'user',
+            timestamp: new Date()
+          };
+          
+          setMessages(prev => [...prev, userMessage]);
+          sendTextMessage(transcript);
+        } catch (error) {
+          console.error('Ошибка обработки результата распознавания:', error);
+          toast.error('Ошибка обработки речи');
+        }
       };
 
       recognitionRef.current.onerror = (event) => {
@@ -89,18 +94,29 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
   }, [messages]);
 
   const startListening = () => {
-    if (recognitionRef.current && !isListening) {
-      recognitionRef.current.start();
-      setIsListening(true);
-      toast.success('🎤 Слушаю...', { duration: 1000 });
+    try {
+      if (recognitionRef.current && !isListening) {
+        recognitionRef.current.start();
+        setIsListening(true);
+        toast.success('🎤 Слушаю...', { duration: 1000 });
+      }
+    } catch (error) {
+      console.error('Ошибка при запуске распознавания:', error);
+      setIsListening(false);
+      toast.error('Ошибка запуска микрофона');
     }
   };
 
   const stopListening = () => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
+    try {
+      if (recognitionRef.current && isListening) {
+        recognitionRef.current.stop();
+        setIsListening(false);
+        toast.info('🛑 Остановлено', { duration: 1000 });
+      }
+    } catch (error) {
+      console.error('Ошибка при остановке распознавания:', error);
       setIsListening(false);
-      toast.info('🛑 Остановлено', { duration: 1000 });
     }
   };
 
@@ -114,60 +130,75 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
 
   // Озвучивание текста
   const speakText = (text: string) => {
-    if (!('speechSynthesis' in window)) {
-      toast.error('Озвучивание речи не поддерживается в вашем браузере');
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ru-RU';
-    utterance.rate = 0.9;
-    utterance.pitch = 1.05;
-    utterance.volume = 1.0;
-
-    // Выбор русского голоса
-    const voices = window.speechSynthesis.getVoices();
-    const russianVoices = voices.filter(voice => voice.lang.startsWith('ru'));
-    
-    if (russianVoices.length > 0) {
-      // Предпочитаем женские голоса
-      const femaleVoice = russianVoices.find(voice => 
-        voice.name.toLowerCase().includes('женский') || 
-        voice.name.toLowerCase().includes('female') ||
-        voice.name.toLowerCase().includes('anna') ||
-        voice.name.toLowerCase().includes('katya')
-      );
-      
-      if (femaleVoice) {
-        utterance.voice = femaleVoice;
-      } else {
-        utterance.voice = russianVoices[0];
+    try {
+      if (!('speechSynthesis' in window)) {
+        toast.error('Озвучивание речи не поддерживается в вашем браузере');
+        return;
       }
+
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ru-RU';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.05;
+      utterance.volume = 1.0;
+
+      // Безопасный выбор голоса
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length > 0) {
+          const russianVoices = voices.filter(voice => voice && voice.lang && voice.lang.startsWith('ru'));
+          
+          if (russianVoices.length > 0) {
+            // Предпочитаем женские голоса
+            const femaleVoice = russianVoices.find(voice => 
+              voice.name && (
+                voice.name.toLowerCase().includes('женский') || 
+                voice.name.toLowerCase().includes('female') ||
+                voice.name.toLowerCase().includes('anna') ||
+                voice.name.toLowerCase().includes('katya')
+              )
+            );
+            
+            if (femaleVoice) {
+              utterance.voice = femaleVoice;
+            } else {
+              utterance.voice = russianVoices[0];
+            }
+          }
+        }
+      } catch (voiceError) {
+        console.warn('Не удалось выбрать голос:', voiceError);
+        // Продолжаем без выбора голоса
+      }
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        toast.success('🔊 Дарья говорит...', { duration: 1000 });
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+      };
+
+      utterance.onerror = (event) => {
+        console.error('Ошибка воспроизведения голоса:', event);
+        setIsSpeaking(false);
+        toast.error('Ошибка воспроизведения голоса');
+      };
+
+      synthesisRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error('Ошибка в speakText:', error);
+      setIsSpeaking(false);
+      toast.error('Ошибка озвучивания текста');
     }
-
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      toast.success('🔊 Дарья говорит...', { duration: 1000 });
-    };
-
-    utterance.onend = () => {
-      setIsSpeaking(false);
-    };
-
-    utterance.onerror = (event) => {
-      console.error('Ошибка воспроизведения голоса:', event);
-      setIsSpeaking(false);
-      toast.error('Ошибка воспроизведения голоса');
-    };
-
-    synthesisRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
   };
 
   // Отправка текстового сообщения
-  const sendTextMessage = async (text: string) => {
+  const sendTextMessage = (text: string) => {
     if (!text.trim()) return;
 
     setIsProcessing(true);
@@ -186,12 +217,26 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
       
       // Автоматически говорим ответ
       setTimeout(() => {
-        speakText(responseText);
+        try {
+          speakText(responseText);
+        } catch (speakError) {
+          console.error('Ошибка при озвучивании:', speakError);
+        }
       }, 500);
       
     } catch (error) {
       console.error('Ошибка обработки сообщения:', error);
       toast.error('Ошибка обработки запроса');
+      
+      // Добавляем сообщение об ошибке
+      const errorMessage: VoiceMessage = {
+        id: (Date.now() + 1).toString(),
+        text: "Извините, произошла ошибка. Попробуйте еще раз.",
+        sender: 'assistant',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsProcessing(false);
     }
