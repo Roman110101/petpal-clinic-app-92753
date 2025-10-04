@@ -1,282 +1,284 @@
-const express = require('express');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const sqlite3 = require('sqlite3');
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+// Google Cloud imports
+import textToSpeech from '@google-cloud/text-to-speech';
+import dialogflow from '@google-cloud/dialogflow';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = 'vet-more-super-secret-key-change-in-production-2024';
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:5173', 'https://petpal-clinic-app-92753.vercel.app'],
-  credentials: true
-}));
-app.use(express.json());
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// База данных
-const dbPath = path.join(__dirname, 'database', 'vetMore.db');
-const db = new sqlite3.Database(dbPath);
+// Serve static files
+app.use(express.static(path.join(__dirname, '../dist')));
 
-// Инициализация базы данных
-const initDatabase = () => {
-  db.serialize(() => {
-    // Таблица пользователей
-    db.run(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        firstName TEXT,
-        lastName TEXT,
-        phone TEXT,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    console.log('✅ Database initialized successfully!');
-  });
-};
-
-// Инициализируем БД
-initDatabase();
-
-// Генерация JWT токена
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
-};
-
-// Регистрация
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { email, password, firstName, lastName, phone } = req.body;
-
-    // Валидация
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email и пароль обязательны'
-      });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Некорректный email адрес'
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: 'Пароль должен содержать минимум 6 символов'
-      });
-    }
-
-    // Хешируем пароль
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Создаем пользователя
-    const query = `
-      INSERT INTO users (email, password, firstName, lastName, phone)
-      VALUES (?, ?, ?, ?, ?)
-    `;
-
-    db.run(query, [
-      email.toLowerCase(),
-      hashedPassword,
-      firstName || null,
-      lastName || null,
-      phone || null
-    ], function(err) {
-      if (err) {
-        if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-          return res.status(409).json({
-            success: false,
-            message: 'Пользователь с таким email уже существует'
-          });
-        }
-        console.error('Registration error:', err);
-        return res.status(500).json({
-          success: false,
-          message: 'Ошибка при регистрации пользователя'
-        });
-      }
-
-      // Генерируем токен
-      const token = generateToken(this.lastID);
-
-      // Возвращаем пользователя без пароля
-      const user = {
-        id: this.lastID,
-        email: email.toLowerCase(),
-        firstName: firstName || null,
-        lastName: lastName || null,
-        phone: phone || null
-      };
-
-      res.status(201).json({
-        success: true,
-        message: 'Пользователь успешно зарегистрирован',
-        data: { user, token }
-      });
-    });
-
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка при регистрации пользователя'
-    });
-  }
+// Google Cloud configuration
+const textToSpeechClient = new textToSpeech.TextToSpeechClient({
+  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID
 });
 
-// Авторизация
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email и пароль обязательны'
-      });
-    }
-
-    // Ищем пользователя
-    const query = 'SELECT * FROM users WHERE email = ?';
-    db.get(query, [email.toLowerCase()], async (err, user) => {
-      if (err) {
-        console.error('Login error:', err);
-        return res.status(500).json({
-          success: false,
-          message: 'Ошибка при авторизации'
-        });
-      }
-
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Неверный email или пароль'
-        });
-      }
-
-      // Проверяем пароль
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
-        return res.status(401).json({
-          success: false,
-          message: 'Неверный email или пароль'
-        });
-      }
-
-      // Генерируем токен
-      const token = generateToken(user.id);
-
-      // Возвращаем пользователя без пароля
-      const userResponse = {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone
-      };
-
-      res.status(200).json({
-        success: true,
-        message: 'Успешная авторизация',
-        data: { user: userResponse, token }
-      });
-    });
-
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка при авторизации'
-    });
-  }
+const dialogflowClient = new dialogflow.SessionsClient({
+  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID
 });
 
-// Проверка токена
-app.get('/api/auth/validate', (req, res) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+// Dialogflow configuration
+const DIALOGFLOW_PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT_ID;
+const DIALOGFLOW_LANGUAGE_CODE = 'ru';
 
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'Токен авторизации отсутствует'
-    });
-  }
+// Store for session data
+const sessions = new Map();
 
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
-    if (err) {
-      if (err.name === 'TokenExpiredError') {
-        return res.status(401).json({
-          success: false,
-          message: 'Токен авторизации истек'
-        });
+/**
+ * Generate audio from text using Google Cloud Text-to-Speech
+ */
+async function generateAudio(text) {
+  try {
+    console.log('🎵 Генерируем аудио для текста:', text.substring(0, 50) + '...');
+    
+    const request = {
+      input: { text: text },
+      voice: {
+        languageCode: 'ru-RU',
+        name: 'ru-RU-Wavenet-C', // Женский голос WaveNet для русского
+        ssmlGender: 'FEMALE'
+      },
+      audioConfig: {
+        audioEncoding: 'MP3',
+        speakingRate: 0.9,
+        pitch: 1.05,
+        volumeGainDb: 2.0
       }
-      return res.status(403).json({
-        success: false,
-        message: 'Недействительный токен авторизации'
+    };
+
+    const [response] = await textToSpeechClient.synthesizeSpeech(request);
+    
+    return response.audioContent;
+  } catch (error) {
+    console.error('❌ Ошибка генерации аудио:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get response from Dialogflow
+ */
+async function getDialogflowResponse(sessionId, text) {
+  try {
+    console.log('🤖 Отправляем запрос в Dialogflow:', text.substring(0, 50) + '...');
+    
+    const sessionPath = dialogflowClient.projectAgentSessionPath(
+      DIALOGFLOW_PROJECT_ID,
+      sessionId
+    );
+
+    const request = {
+      session: sessionPath,
+      queryInput: {
+        text: {
+          text: text,
+          languageCode: DIALOGFLOW_LANGUAGE_CODE,
+        },
+      },
+    };
+
+    const [responses] = await dialogflowClient.detectIntent(request);
+    const result = responses[0].queryResult;
+    
+    console.log('✅ Ответ от Dialogflow:', result.fulfillmentText);
+    
+    return {
+      text: result.fulfillmentText,
+      intent: result.intent.displayName,
+      confidence: result.intentDetectionConfidence
+    };
+  } catch (error) {
+    console.error('❌ Ошибка Dialogflow:', error);
+    
+    // Fallback response
+    return {
+      text: "Извините, я не поняла ваш вопрос. Можете переформулировать?",
+      intent: "fallback",
+      confidence: 0
+    };
+  }
+}
+
+/**
+ * API endpoint for voice processing
+ */
+app.post('/api/voice/process', async (req, res) => {
+  try {
+    const { text, sessionId = 'default' } = req.body;
+    
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ 
+        error: 'Текст сообщения обязателен' 
       });
     }
+
+    console.log('🎤 Обрабатываем голосовое сообщение:', {
+      sessionId,
+      text: text.substring(0, 50) + '...'
+    });
+
+    // Get response from Dialogflow
+    const dialogflowResponse = await getDialogflowResponse(sessionId, text);
+    
+    // Generate audio from response text
+    const audioBuffer = await generateAudio(dialogflowResponse.text);
+    
+    // Convert buffer to base64 for transmission
+    const audioBase64 = audioBuffer.toString('base64');
+    
+    // Store session data
+    sessions.set(sessionId, {
+      lastMessage: text,
+      lastResponse: dialogflowResponse.text,
+      timestamp: Date.now()
+    });
 
     res.json({
       success: true,
-      message: 'Токен действителен',
-      userId: decoded.userId
+      response: {
+        text: dialogflowResponse.text,
+        audio: audioBase64,
+        intent: dialogflowResponse.intent,
+        confidence: dialogflowResponse.confidence
+      }
     });
-  });
+
+  } catch (error) {
+    console.error('❌ Ошибка обработки голосового сообщения:', error);
+    res.status(500).json({ 
+      error: 'Ошибка обработки голосового сообщения',
+      details: error.message 
+    });
+  }
 });
 
-// Тестовый маршрут
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'Vet Center MORE API is running!',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Обработчик всех остальных маршрутов
-app.use('*', (req, res) => {
-  res.status(404).json({ 
-    error: 'Route not found',
-    path: req.originalUrl 
-  });
-});
-
-// Global error handler
-app.use((error, req, res, next) => {
-  console.error('Error:', error);
-  res.status(500).json({ 
-    error: 'Internal server error'
-  });
-});
-
-// Закрытие соединения с БД при завершении процесса
-process.on('SIGINT', () => {
-  db.close((err) => {
-    if (err) {
-      console.error('❌ Error closing database:', err);
-    } else {
-      console.log('📁 Database connection closed.');
+/**
+ * API endpoint for text-only processing (without audio)
+ */
+app.post('/api/voice/text', async (req, res) => {
+  try {
+    const { text, sessionId = 'default' } = req.body;
+    
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ 
+        error: 'Текст сообщения обязателен' 
+      });
     }
-    process.exit(0);
+
+    console.log('💬 Обрабатываем текстовое сообщение:', {
+      sessionId,
+      text: text.substring(0, 50) + '...'
+    });
+
+    // Get response from Dialogflow
+    const dialogflowResponse = await getDialogflowResponse(sessionId, text);
+    
+    // Store session data
+    sessions.set(sessionId, {
+      lastMessage: text,
+      lastResponse: dialogflowResponse.text,
+      timestamp: Date.now()
+    });
+
+    res.json({
+      success: true,
+      response: {
+        text: dialogflowResponse.text,
+        intent: dialogflowResponse.intent,
+        confidence: dialogflowResponse.confidence
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка обработки текстового сообщения:', error);
+    res.status(500).json({ 
+      error: 'Ошибка обработки текстового сообщения',
+      details: error.message 
+    });
+  }
+});
+
+/**
+ * API endpoint for generating audio from text
+ */
+app.post('/api/voice/synthesize', async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ 
+        error: 'Текст для озвучивания обязателен' 
+      });
+    }
+
+    console.log('🎵 Синтезируем речь для текста:', text.substring(0, 50) + '...');
+
+    // Generate audio from text
+    const audioBuffer = await generateAudio(text);
+    
+    // Convert buffer to base64 for transmission
+    const audioBase64 = audioBuffer.toString('base64');
+    
+    res.json({
+      success: true,
+      audio: audioBase64
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка синтеза речи:', error);
+    res.status(500).json({ 
+      error: 'Ошибка синтеза речи',
+      details: error.message 
+    });
+  }
+});
+
+/**
+ * Health check endpoint
+ */
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    services: {
+      dialogflow: 'connected',
+      textToSpeech: 'connected'
+    }
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`📡 Register: http://localhost:${PORT}/api/auth/register`);
-  console.log(`📡 Login: http://localhost:${PORT}/api/auth/login`);
+/**
+ * Serve React app for all other routes
+ */
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Сервер запущен на порту ${PORT}`);
+  console.log(`🌐 API доступен по адресу: http://localhost:${PORT}/api`);
+  console.log(`🎤 Голосовой ассистент: http://localhost:${PORT}`);
+  console.log('📋 Не забудьте настроить переменные окружения!');
+});
+
+export default app;

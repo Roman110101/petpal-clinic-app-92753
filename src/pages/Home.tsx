@@ -32,6 +32,10 @@ import {
   User,
   Video,
   Mic,
+  Sparkles,
+  Brain,
+  Bot,
+  Activity,
 } from "lucide-react";
 import heroImage from "@/assets/hero-dog.jpg";
 import logoImage from "@/assets/logo.png";
@@ -865,10 +869,57 @@ const Home = () => {
         </Accordion>
       </section>
 
+      {/* AI Assistant Banner */}
+      <section className="px-4 mt-8">
+        <Card className="bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 text-white overflow-hidden relative">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
+                    <Brain className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Дарья</h3>
+                    <p className="text-sm text-white/80">AI Помощница</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Sparkles className="w-4 h-4 animate-pulse" />
+                    <Sparkles className="w-4 h-4 animate-pulse" style={{animationDelay: '0.5s'}} />
+                    <Sparkles className="w-4 h-4 animate-pulse" style={{animationDelay: '1s'}} />
+                  </div>
+                </div>
+                <p className="text-sm text-white/90 mb-4 leading-relaxed">
+                  Поговорите с Дарьей! 😊 Расскажите о симптомах питомца голосом или текстом, и она соберет всю информацию для врача.
+                </p>
+                <Button 
+                  onClick={() => setIsVoiceAssistantOpen(true)}
+                  className="bg-white text-teal-600 hover:bg-white/90 font-semibold shadow-lg"
+                >
+                  <Mic className="w-4 h-4 mr-2" />
+                  Начать разговор
+                </Button>
+              </div>
+              <div className="hidden sm:block ml-4">
+                <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <Bot className="w-10 h-10" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Анимированные элементы */}
+          <div className="absolute top-2 right-2 w-4 h-4 bg-white/20 rounded-full animate-ping"></div>
+          <div className="absolute bottom-2 left-2 w-3 h-3 bg-white/20 rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-1/2 right-8 w-2 h-2 bg-white/20 rounded-full animate-ping" style={{animationDelay: '2s'}}></div>
+        </Card>
+      </section>
+
       {/* Quick Actions */}
       <section className="px-4 mt-12">
         <h2 className="text-xl font-semibold text-foreground mb-4">Быстрые действия</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           <div
             className="bg-pink-100 dark:bg-pink-950/30 rounded-lg p-4 flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform"
             onClick={() => navigate("/appointment")}
@@ -903,6 +954,13 @@ const Home = () => {
           >
             <Mic className="w-6 h-6 text-green-600 dark:text-green-400" />
             <span className="text-sm font-medium text-green-700 dark:text-green-300">Голос</span>
+          </div>
+          <div
+            className="bg-orange-100 dark:bg-orange-950/30 rounded-lg p-4 flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform"
+            onClick={() => navigate("/symptoms")}
+          >
+            <Activity className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            <span className="text-sm font-medium text-orange-700 dark:text-orange-300">Симптомы</span>
           </div>
         </div>
       </section>

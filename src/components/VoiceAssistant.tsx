@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from "sonner";
 import { aiAssistant } from '@/lib/ai-assistant';
+import { voiceAPI, VoiceAPIClient } from '@/lib/voice-api';
 
 interface VoiceMessage {
   id: string;
@@ -36,12 +37,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<VoiceMessage[]>([
     {
       id: '1',
-      text: 'Привет! Я голосовой помощник клиники "Море". Расскажите о симптомах вашего питомца, и я помогу собрать информацию для врача.',
+      text: 'Привет! 😊 Я Дарья, ваша помощница! Чем могу помочь?',
       sender: 'assistant',
       timestamp: new Date()
     }
   ]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [apiConnected, setApiConnected] = useState(false);
+  const [useCloudAPI, setUseCloudAPI] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -79,22 +82,8 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
         setIsProcessing(true);
         
         try {
-          // Получаем ответ от AI
-          const response = await aiAssistant.getResponse(transcript);
-          
-          // Добавляем ответ ассистента
-          const assistantMessage: VoiceMessage = {
-            id: (Date.now() + 1).toString(),
-            text: response,
-            sender: 'assistant',
-            timestamp: new Date(),
-            isAudio: true
-          };
-          
-          setMessages(prev => [...prev, assistantMessage]);
-          
-          // Озвучиваем ответ
-          speakText(response);
+          // Используем новую логику обработки сообщений с ElevenLabs
+          await sendTextMessage(transcript);
           
         } catch (error) {
           console.error('Ошибка AI:', error);
@@ -118,69 +107,271 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
     }
   }, []);
 
+  // Функции для управления распознаванием речи
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      recognitionRef.current.start();
+      toast.success('🎤 Слушаю...', { duration: 1000 });
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+      toast.info('🛑 Остановлено', { duration: 1000 });
+    }
+  };
+
+  const stopSpeaking = () => {
+    if (synthesisRef.current) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      toast.info('🔇 Голос остановлен', { duration: 1000 });
+    }
+  };
+
   // Прокрутка к последнему сообщению
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Озвучивание текста
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      // Останавливаем предыдущее озвучивание
-      window.speechSynthesis.cancel();
+  // Проверка подключения к API при открытии
+  useEffect(() => {
+    if (isOpen) {
+      // Проверяем подключение к ElevenLabs API
+      checkAPIConnection();
+    }
+  }, [isOpen]);
+
+  // Автоматическое озвучивание приветственного сообщения при открытии
+  useEffect(() => {
+    if (isOpen && messages.length === 1) {
+      // Небольшая задержка для загрузки голосов
+      setTimeout(() => {
+        speakText(messages[0].text);
+      }, 1000);
+    }
+  }, [isOpen]);
+
+  // Проверка подключения к API
+  const checkAPIConnection = async () => {
+    try {
+      const connected = await voiceAPI.checkHealth();
+      setApiConnected(connected);
+      setUseCloudAPI(connected);
       
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ru-RU';
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      utterance.volume = 0.8;
+      if (connected) {
+        toast.success('🚀 Подключено к ElevenLabs API!', { duration: 2000 });
+      } else {
+        toast.warning('⚠️ Используется локальный режим', { duration: 2000 });
+      }
+    } catch (error) {
+      console.error('❌ Ошибка проверки API:', error);
+      setApiConnected(false);
+      setUseCloudAPI(false);
+      toast.warning('⚠️ API недоступен, используется локальный режим', { duration: 2000 });
+    }
+  };
+
+
+  // Озвучивание текста с улучшенным голосом
+  const speakText = async (text: string) => {
+    console.log('🎤 Попытка озвучить текст:', text);
+    
+    if (useCloudAPI && apiConnected) {
+      // Используем ElevenLabs Text-to-Speech
+      try {
+        console.log('🎤 Используем ElevenLabs TTS');
+        setIsSpeaking(true);
+        toast.success('🔊 Дарья говорит...', { duration: 1000 });
+        
+        const response = await voiceAPI.synthesizeSpeech(text);
+        
+        if (response.success && response.audio) {
+          await VoiceAPIClient.playAudio(response.audio);
+          console.log('✅ ElevenLabs TTS воспроизведение завершено');
+        } else {
+          throw new Error('Не удалось получить аудио от API');
+        }
+      } catch (error) {
+        console.error('❌ Ошибка ElevenLabs TTS:', error);
+        toast.error('Ошибка синтеза речи через ElevenLabs');
+        setIsSpeaking(false);
+        return; // Не используем fallback на браузерный голос
+      } finally {
+        setIsSpeaking(false);
+      }
+    } else {
+      // Если API не подключен, показываем ошибку вместо использования браузерного голоса
+      console.log('❌ ElevenLabs API не подключен');
+      toast.error('Голосовой ассистент недоступен. Проверьте подключение к API.');
+    }
+  };
+
+  // Локальный синтез речи (fallback)
+  const fallbackSpeechSynthesis = (text: string) => {
+    console.log('🖥️ Используем локальный синтез речи');
+    
+    if (!('speechSynthesis' in window)) {
+      console.error('❌ SpeechSynthesis не поддерживается');
+      toast.error('Озвучивание речи не поддерживается в вашем браузере');
+      return;
+    }
+
+    // Останавливаем предыдущее озвучивание
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ru-RU';
+    
+    // Получаем голоса с задержкой для их загрузки
+    const getVoices = () => {
+      return new Promise<SpeechSynthesisVoice[]>((resolve) => {
+        let voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          resolve(voices);
+        } else {
+          // Ждем загрузки голосов
+          window.speechSynthesis.addEventListener('voiceschanged', () => {
+            voices = window.speechSynthesis.getVoices();
+            resolve(voices);
+          }, { once: true });
+        }
+      });
+    };
+
+    getVoices().then((voices) => {
+      console.log('🎵 Доступные голоса:', voices.map(v => `${v.name} (${v.lang})`));
+      
+      // Ищем лучший женский голос для максимально приятного звучания
+      const allVoices = voices.filter(voice => 
+        voice.lang.startsWith('ru') || 
+        voice.lang.startsWith('en') ||
+        voice.name.includes('Russian') || 
+        voice.name.includes('Google') ||
+        voice.name.includes('Microsoft') ||
+        voice.name.includes('Samantha') ||
+        voice.name.includes('Karen') ||
+        voice.name.includes('Victoria') ||
+        voice.name.includes('Kate') ||
+        voice.name.includes('Zira') ||
+        voice.name.includes('Female') ||
+        voice.name.includes('Woman') ||
+        voice.name.includes('Girl') ||
+        voice.name.includes('Luna') ||
+        voice.name.includes('Nova') ||
+        voice.name.includes('Serena') ||
+        voice.name.includes('Aria') ||
+        voice.name.includes('Ivy') ||
+        voice.name.includes('Ruby') ||
+        voice.name.includes('Amber') ||
+        voice.name.includes('Coral')
+      );
+
+      // Приоритет русским голосам
+      const russianVoices = allVoices.filter(voice => voice.lang.startsWith('ru'));
+      
+      console.log('🇷🇺 Русские голоса:', russianVoices.map(v => v.name));
+      
+      // Выбираем лучший женский голос для максимально приятного звучания
+      let selectedVoice = null;
+      
+      if (russianVoices.length > 0) {
+        // Ищем лучший русский женский голос
+        selectedVoice = russianVoices.find(voice => 
+          voice.name.toLowerCase().includes('female') ||
+          voice.name.toLowerCase().includes('женский') ||
+          voice.name.toLowerCase().includes('woman') ||
+          voice.name.toLowerCase().includes('girl') ||
+          voice.name.includes('Google') ||
+          voice.name.includes('Samantha') ||
+          voice.name.includes('Karen') ||
+          voice.name.includes('Victoria') ||
+          voice.name.includes('Kate') ||
+          voice.name.includes('Zira') ||
+          voice.name.includes('Luna') ||
+          voice.name.includes('Nova') ||
+          voice.name.includes('Serena') ||
+          voice.name.includes('Aria') ||
+          voice.name.includes('Ivy') ||
+          voice.name.includes('Ruby') ||
+          voice.name.includes('Amber') ||
+          voice.name.includes('Coral')
+        ) || russianVoices[0];
+        
+        console.log('🎤 Выбран русский женский голос:', selectedVoice?.name);
+      } else if (allVoices.length > 0) {
+        // Ищем лучший женский голос из всех доступных
+        selectedVoice = allVoices.find(voice => 
+          voice.name.toLowerCase().includes('female') ||
+          voice.name.toLowerCase().includes('woman') ||
+          voice.name.toLowerCase().includes('girl') ||
+          voice.name.includes('Samantha') ||
+          voice.name.includes('Karen') ||
+          voice.name.includes('Victoria') ||
+          voice.name.includes('Kate') ||
+          voice.name.includes('Zira') ||
+          voice.name.includes('Luna') ||
+          voice.name.includes('Nova') ||
+          voice.name.includes('Serena') ||
+          voice.name.includes('Aria') ||
+          voice.name.includes('Ivy') ||
+          voice.name.includes('Ruby') ||
+          voice.name.includes('Amber') ||
+          voice.name.includes('Coral') ||
+          voice.name.includes('Google') ||
+          voice.name.includes('Microsoft')
+        ) || allVoices[0];
+        
+        console.log('🎤 Выбран женский голос:', selectedVoice?.name);
+      } else {
+        console.log('⚠️ Подходящие голоса не найдены, используем системный');
+      }
+      
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        utterance.lang = selectedVoice.lang;
+      }
+      
+      // Максимально оптимизированные настройки для самого приятного женского голоса
+      utterance.rate = 0.75;        // Еще медленнее для максимальной естественности
+      utterance.pitch = 1.2;        // Выше для более женственного звучания
+      utterance.volume = 0.85;      // Комфортная громкость
+      
+      // Дополнительные настройки для улучшения качества
+      utterance.lang = selectedVoice?.lang || 'ru-RU';
       
       utterance.onstart = () => {
+        console.log('🔊 Начало локального озвучивания');
         setIsSpeaking(true);
+        toast.success('🔊 Дарья говорит...', { duration: 1000 });
       };
       
       utterance.onend = () => {
+        console.log('✅ Локальное озвучивание завершено');
         setIsSpeaking(false);
       };
       
-      utterance.onerror = () => {
+      utterance.onerror = (event) => {
+        console.error('❌ Ошибка локального озвучивания:', event);
         setIsSpeaking(false);
+        toast.error('Ошибка воспроизведения голоса');
       };
       
       synthesisRef.current = utterance;
       window.speechSynthesis.speak(utterance);
-    }
+    }).catch((error) => {
+      console.error('❌ Ошибка получения голосов:', error);
+      // Fallback - говорим без выбора голоса
+      utterance.rate = 0.9;
+      utterance.pitch = 1.05;
+      utterance.volume = 1.0;
+      window.speechSynthesis.speak(utterance);
+    });
   };
 
-  // Остановка озвучивания
-  const stopSpeaking = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    }
-  };
 
-  // Начало записи
-  const startListening = () => {
-    if (recognitionRef.current && !isListening) {
-      try {
-        recognitionRef.current.start();
-        toast.success('Говорите...', {
-          description: 'Слушаю вас'
-        });
-      } catch (error) {
-        console.error('Ошибка начала записи:', error);
-        toast.error('Не удалось начать запись');
-      }
-    }
-  };
 
-  // Остановка записи
-  const stopListening = () => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-    }
-  };
 
   // Отправка текстового сообщения
   const sendTextMessage = async (text: string) => {
@@ -197,21 +388,55 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
     setIsProcessing(true);
     
     try {
-      const response = await aiAssistant.getResponse(text);
+      let responseText: string;
+      
+      // Используем ElevenLabs API если доступен
+      if (useCloudAPI && apiConnected) {
+        try {
+          console.log('🧠 Используем ElevenLabs AI');
+          const response = await voiceAPI.processTextMessage(text);
+          
+          if (response.success) {
+            responseText = response.response.text;
+            console.log('✅ Получен ответ от Google Cloud AI');
+          } else {
+            throw new Error('Google API вернул ошибку');
+          }
+        } catch (error) {
+          console.error('❌ Ошибка Google Cloud AI:', error);
+          // Fallback на локальный AI
+          responseText = aiAssistant.getResponse(text);
+        }
+      } else {
+        // Используем локальный AI
+        console.log('🧠 Используем локальный AI (умные ответы)');
+        responseText = aiAssistant.getResponse(text);
+      }
       
       const assistantMessage: VoiceMessage = {
         id: (Date.now() + 1).toString(),
-        text: response,
+        text: responseText,
         sender: 'assistant',
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, assistantMessage]);
-      speakText(response);
+      // Автоматически говорим ответ после прослушивания
+      await speakText(responseText);
       
     } catch (error) {
-      console.error('Ошибка AI:', error);
+      console.error('❌ Ошибка обработки сообщения:', error);
       toast.error('Ошибка обработки запроса');
+      
+      // Fallback ответ
+      const fallbackMessage: VoiceMessage = {
+        id: (Date.now() + 1).toString(),
+        text: "Извините, произошла ошибка. Попробуйте еще раз.",
+        sender: 'assistant',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, fallbackMessage]);
     } finally {
       setIsProcessing(false);
     }
@@ -221,16 +446,16 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999] p-4">
-      <Card className="w-full max-w-md h-[600px] flex flex-col shadow-2xl">
+      <Card className="w-full max-w-md h-[600px] flex flex-col shadow-2xl border-teal-200 bg-gradient-to-b from-teal-50 to-white">
         {/* Заголовок */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-lg">
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-t-lg">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/20 rounded-full">
               <Bot className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-semibold">Голосовой помощник</h3>
-              <p className="text-xs text-blue-100">AI ассистент клиники</p>
+              <h3 className="font-semibold">Дарья</h3>
+              <p className="text-xs text-teal-100">AI Помощница</p>
             </div>
           </div>
           <Button
@@ -295,7 +520,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
               size="lg"
               onClick={isListening ? stopListening : startListening}
               disabled={isProcessing}
-              className="rounded-full w-16 h-16 shadow-lg"
+              className="rounded-full w-16 h-16 shadow-lg bg-teal-500 hover:bg-teal-600 text-white"
             >
               {isListening ? (
                 <MicOff className="w-6 h-6" />
@@ -309,7 +534,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
                 variant="outline"
                 size="sm"
                 onClick={stopSpeaking}
-                className="rounded-full"
+                className="rounded-full border-teal-300 text-teal-600 hover:bg-teal-50"
               >
                 <VolumeX className="w-4 h-4 mr-2" />
                 Стоп
@@ -318,22 +543,42 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Статус */}
-          <div className="text-center">
-            {isListening && (
-              <Badge variant="secondary" className="bg-red-100 text-red-800 animate-pulse">
-                🎤 Слушаю...
+          <div className="text-center space-y-1">
+            {/* API Status */}
+            <div className="flex justify-center gap-2 flex-wrap">
+              <Badge 
+                variant="secondary" 
+                className="bg-teal-100 text-teal-800"
+              >
+                {useCloudAPI && apiConnected ? "🎤 ElevenLabs" : "🎤 Улучшенный голос"}
               </Badge>
-            )}
-            {isSpeaking && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800 animate-pulse">
-                🔊 Говорю...
+              
+              <Badge 
+                variant="secondary" 
+                className="bg-blue-100 text-blue-800"
+              >
+                {useCloudAPI && apiConnected ? "🧠 ElevenLabs AI" : "🧠 Умный AI"}
               </Badge>
-            )}
-            {isProcessing && (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 animate-pulse">
-                🤔 Обрабатываю...
-              </Badge>
-            )}
+            </div>
+            
+            {/* Activity Status */}
+            <div>
+              {isListening && (
+                <Badge variant="secondary" className="bg-red-100 text-red-800 animate-pulse">
+                  🎤 Слушаю...
+                </Badge>
+              )}
+              {isProcessing && (
+                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 animate-pulse">
+                  🤔 Дарья думает...
+                </Badge>
+              )}
+              {isSpeaking && (
+                <Badge variant="secondary" className="bg-teal-100 text-teal-800 animate-pulse">
+                  🔊 Дарья говорит...
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* Быстрые действия */}
@@ -357,6 +602,39 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
             >
               <MessageCircle className="w-3 h-3 mr-1" />
               Запись
+            </Button>
+          </div>
+
+          {/* Текстовый ввод */}
+          <div className="flex items-center gap-2 pt-2">
+            <input
+              type="text"
+              placeholder="Напишите сообщение или используйте микрофон..."
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  const input = e.target as HTMLInputElement;
+                  if (input.value.trim()) {
+                    sendTextMessage(input.value);
+                    input.value = '';
+                  }
+                }
+              }}
+              disabled={isProcessing}
+            />
+            <Button
+              size="sm"
+              onClick={() => {
+                const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+                if (input && input.value.trim()) {
+                  sendTextMessage(input.value);
+                  input.value = '';
+                }
+              }}
+              disabled={isProcessing}
+              className="bg-teal-500 hover:bg-teal-600 text-white"
+            >
+              <Send className="w-4 h-4" />
             </Button>
           </div>
         </div>
