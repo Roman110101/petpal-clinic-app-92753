@@ -95,6 +95,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
 
   const startListening = () => {
     try {
+      // Инициализация аудио контекста для iOS
+      if (typeof window !== 'undefined' && window.AudioContext) {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+      }
+
       if (recognitionRef.current && !isListening) {
         recognitionRef.current.start();
         setIsListening(true);
@@ -158,6 +166,10 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
           const audioUrl = URL.createObjectURL(audioBlob);
           const audio = new Audio(audioUrl);
 
+          // Настройки для iOS совместимости
+          audio.preload = 'auto';
+          audio.crossOrigin = 'anonymous';
+
           audio.onended = () => {
             URL.revokeObjectURL(audioUrl);
             setIsSpeaking(false);
@@ -171,7 +183,34 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
             fallbackSpeechSynthesis(text);
           };
 
-          await audio.play();
+          // Попытка воспроизведения с обработкой ошибок iOS
+          try {
+            await audio.play();
+          } catch (playError) {
+            console.warn('iOS: Не удалось автоматически воспроизвести аудио:', playError);
+            
+            // Для iOS - показываем кнопку воспроизведения
+            if (playError.name === 'NotAllowedError') {
+              toast.error('🔊 Нажмите для воспроизведения голоса', { 
+                duration: 3000,
+                action: {
+                  label: '▶️ Воспроизвести',
+                  onClick: async () => {
+                    try {
+                      await audio.play();
+                    } catch (e) {
+                      console.error('Ошибка ручного воспроизведения:', e);
+                      fallbackSpeechSynthesis(text);
+                    }
+                  }
+                }
+              });
+              return;
+            }
+            
+            // Другие ошибки - fallback
+            fallbackSpeechSynthesis(text);
+          }
           return;
         }
       }
@@ -233,6 +272,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
 
       utterance.onstart = () => {
         setIsSpeaking(true);
+        toast.success('🔊 Дарья говорит (браузерный голос)...', { duration: 1000 });
       };
 
       utterance.onend = () => {
@@ -256,6 +296,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
   // Отправка текстового сообщения
   const sendTextMessage = async (text: string) => {
     if (!text.trim()) return;
+
+    // Инициализация аудио контекста для iOS при первом взаимодействии
+    if (typeof window !== 'undefined' && window.AudioContext) {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+    }
 
     setIsProcessing(true);
     
