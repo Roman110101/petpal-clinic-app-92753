@@ -550,14 +550,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
                 variant="secondary" 
                 className="bg-teal-100 text-teal-800"
               >
-                {useCloudAPI && apiConnected ? "🎤 ElevenLabs" : "🎤 Улучшенный голос"}
+                🎤 Голосовой ассистент
               </Badge>
               
               <Badge 
                 variant="secondary" 
                 className="bg-blue-100 text-blue-800"
               >
-                {useCloudAPI && apiConnected ? "🧠 ElevenLabs AI" : "🧠 Умный AI"}
+                🧠 AI-ассистент
               </Badge>
             </div>
             
