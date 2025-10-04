@@ -628,10 +628,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
               <Send className="w-4 h-4" />
             </Button>
           </div>
-        </div>
-      </Card>
-    </div>
-  );
+        </Card>
+      </div>
+    );
 };
 
 export default VoiceAssistant;
