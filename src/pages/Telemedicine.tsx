@@ -39,8 +39,6 @@ import {
   Smile,
   X,
   RotateCcw,
-  Maximize,
-  Minimize,
   FlipHorizontal,
   Check
 } from 'lucide-react';
@@ -56,7 +54,6 @@ interface VideoCallState {
   callDuration: number;
   connectionQuality: 'excellent' | 'good' | 'poor' | 'disconnected';
   isConnecting: boolean;
-  isFullscreen: boolean;
   isFrontCamera: boolean;
 }
 
@@ -86,7 +83,6 @@ const Telemedicine = () => {
     callDuration: 0,
     connectionQuality: 'excellent',
     isConnecting: false,
-    isFullscreen: false,
     isFrontCamera: true
   });
 
@@ -186,32 +182,10 @@ const Telemedicine = () => {
     });
   };
 
-  // Проверка поддержки камеры
+  // Простая проверка поддержки камеры (без блокировок)
   const checkCameraSupport = async () => {
-    try {
-      // Проверяем поддержку медиаустройств
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        toast.error('Браузер не поддерживает камеру', {
-          description: 'Обновите браузер или используйте Chrome/Firefox/Safari'
-        });
-        return false;
-      }
-
-      // Проверяем HTTPS для мобильных устройств
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile && location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        toast.error('Требуется HTTPS для мобильных устройств', {
-          description: 'Для iPhone/Android нужен безопасный протокол HTTPS'
-        });
-        return false;
-      }
-
-      console.log('📷 Проверка камеры пройдена');
-      return true;
-    } catch (error) {
-      console.error('Ошибка проверки камеры:', error);
-      return true; // В демо-режиме продолжаем даже при ошибках
-    }
+    console.log('📷 Проверка камеры пропущена - демо режим');
+    return true;
   };
 
   // Запуск видеозвонка
@@ -538,7 +512,6 @@ const Telemedicine = () => {
       callDuration: 0,
       connectionQuality: 'excellent',
       isConnecting: false,
-      isFullscreen: false,
       isFrontCamera: true
     });
     
@@ -1174,15 +1147,6 @@ const emojis = ['😊', '😢', '😍', '🤔', '👍', '👎', '❤️', '🐱'
                     <FlipHorizontal className="w-4 h-4" />
                   </Button>
                   
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={toggleFullscreen}
-                    className="rounded-full w-10 h-10 shadow-md hover:shadow-lg transition-all duration-200 bg-purple-500 hover:bg-purple-600 text-white"
-                    title="Полный экран"
-                  >
-                    {callState.isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-                  </Button>
                   
                   <Button
                     variant={callState.isAudioOn ? "default" : "destructive"}
@@ -1523,15 +1487,6 @@ const emojis = ['😊', '😢', '😍', '🤔', '👍', '👎', '❤️', '🐱'
               <FlipHorizontal className="w-5 h-5" />
             </Button>
             
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={toggleFullscreen}
-              className="rounded-full w-12 h-12 shadow-lg hover:shadow-xl transition-all duration-200 bg-purple-500 hover:bg-purple-600 text-white"
-              title="Полный экран"
-            >
-              {callState.isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-            </Button>
             
             <Button
               variant={callState.isAudioOn ? "default" : "destructive"}
