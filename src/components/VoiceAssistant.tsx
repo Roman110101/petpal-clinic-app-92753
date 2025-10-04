@@ -155,6 +155,15 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
 
   // Проверка подключения к API
   const checkAPIConnection = async () => {
+    // На продакшне всегда используем локальный режим
+    const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('192.168');
+    
+    if (isProduction) {
+      setApiConnected(false);
+      setUseCloudAPI(false);
+      return;
+    }
+    
     try {
       const connected = await voiceAPI.checkHealth();
       setApiConnected(connected);
@@ -179,7 +188,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
     console.log('🎤 Попытка озвучить текст:', text);
     
     if (useCloudAPI && apiConnected) {
-      // Используем ElevenLabs Text-to-Speech
+      // Используем ElevenLabs Text-to-Speech (только локально)
       try {
         console.log('🎤 Используем ElevenLabs TTS');
         setIsSpeaking(true);
@@ -202,9 +211,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
         setIsSpeaking(false);
       }
     } else {
-      // Если API не подключен, показываем ошибку вместо использования браузерного голоса
-      console.log('❌ ElevenLabs API не подключен');
-      toast.error('Голосовой ассистент недоступен. Проверьте подключение к API.');
+      // Используем локальный браузерный голос
+      console.log('🖥️ Используем локальный браузерный голос');
+      fallbackSpeechSynthesis(text);
     }
   };
 
@@ -542,24 +551,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          {/* Статус */}
-          <div className="text-center space-y-1">
-            {/* API Status */}
-            <div className="flex justify-center gap-2 flex-wrap">
-              <Badge 
-                variant="secondary" 
-                className="bg-teal-100 text-teal-800"
-              >
-                🎤 Голосовой ассистент
-              </Badge>
-              
-              <Badge 
-                variant="secondary" 
-                className="bg-blue-100 text-blue-800"
-              >
-                🧠 AI-ассистент
-              </Badge>
-            </div>
             
             {/* Activity Status */}
             <div>
@@ -586,7 +577,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => sendTextMessage('У моего кота пропал аппетит')}
+              onClick={() => window.location.href = '/symptoms'}
               disabled={isProcessing}
               className="text-xs"
             >
@@ -596,7 +587,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isOpen, onClose }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => sendTextMessage('Как записаться на приём?')}
+              onClick={() => window.location.href = '/appointment'}
               disabled={isProcessing}
               className="text-xs"
             >
